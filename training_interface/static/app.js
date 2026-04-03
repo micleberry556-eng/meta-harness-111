@@ -57,6 +57,7 @@
             if (target === "projects") { loadProjects(); loadModelsForSelects(); loadBlueprintsForSelect(); }
             if (target === "knowledge") loadKB();
             if (target === "chat") loadModelsForSelects();
+            if (target === "hub") loadModelsForSelects();
             if (target === "dashboard") loadDashboard();
             if (target === "admin") loadAdmin();
         });
@@ -139,7 +140,7 @@
             const data = await api("/api/models/all");
             const options = data.models.map((m) => `<option value="${m.ref}">${m.name} (${m.provider_name}${m.size_gb ? ', ' + m.size_gb + ' GB' : ''})</option>`).join("");
             const empty = '<option value="">Select model...</option>';
-            ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model"].forEach((sel) => {
+            ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model"].forEach((sel) => {
                 const el = $(sel);
                 if (el) el.innerHTML = empty + options;
             });
@@ -149,7 +150,7 @@
                 const data = await api("/api/models");
                 const options = data.models.map((m) => `<option value="${m.name}">${m.name} (${formatBytes(m.size)})</option>`).join("");
                 const empty = '<option value="">Select model...</option>';
-                ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model"].forEach((sel) => {
+                ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model"].forEach((sel) => {
                     const el = $(sel);
                     if (el) el.innerHTML = empty + options;
                 });
@@ -1087,6 +1088,85 @@
 
     $("#btn-close-edit").addEventListener("click", () => {
         $("#edit-modal").classList.add("hidden");
+    });
+
+    // ── AI Hub — Response Checker ──────────────────────────────────────
+    $("#btn-hub-check").addEventListener("click", async () => {
+        const responseText = $("#hub-response").value.trim();
+        const model = $("#hub-model").value;
+        if (!responseText) return alert("Paste an AI response to check");
+        if (!model) return alert("Select a model for checking");
+
+        $("#btn-hub-check").textContent = "Checking...";
+        $("#btn-hub-check").disabled = true;
+        $("#hub-results").classList.add("hidden");
+
+        try {
+            const data = await api("/api/hub/check", {
+                method: "POST",
+                body: JSON.stringify({
+                    response_text: responseText,
+                    context: $("#hub-context").value.trim(),
+                    check_type: $("#hub-check-type").value,
+                    model: model,
+                }),
+            });
+
+            // Show results
+            $("#hub-results").classList.remove("hidden");
+
+            // Score badge
+            const scoreBadge = $("#hub-score-badge");
+            if (data.score >= 8) {
+                scoreBadge.className = "badge badge-pass";
+                scoreBadge.textContent = `Score: ${data.score}/10`;
+            } else if (data.score >= 5) {
+                scoreBadge.className = "badge badge-partial";
+                scoreBadge.textContent = `Score: ${data.score}/10`;
+            } else {
+                scoreBadge.className = "badge badge-fail";
+                scoreBadge.textContent = data.score >= 0 ? `Score: ${data.score}/10` : "Could not score";
+            }
+
+            // Summary
+            $("#hub-summary").textContent = data.summary || "";
+
+            // Errors
+            if (data.errors && data.errors.length) {
+                $("#hub-errors-section").classList.remove("hidden");
+                $("#hub-errors-list").innerHTML = data.errors.map((e) => `<li>${escapeHtml(e)}</li>`).join("");
+            } else {
+                $("#hub-errors-section").classList.add("hidden");
+            }
+
+            // Warnings
+            if (data.warnings && data.warnings.length) {
+                $("#hub-warnings-section").classList.remove("hidden");
+                $("#hub-warnings-list").innerHTML = data.warnings.map((w) => `<li style="color:var(--warning)">${escapeHtml(w)}</li>`).join("");
+            } else {
+                $("#hub-warnings-section").classList.add("hidden");
+            }
+
+            // Corrected version
+            $("#hub-corrected").textContent = data.corrected || "(no corrections needed)";
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        } finally {
+            $("#btn-hub-check").textContent = "Check & Fix";
+            $("#btn-hub-check").disabled = false;
+        }
+    });
+
+    // Copy corrected text
+    $("#btn-hub-copy").addEventListener("click", () => {
+        const text = $("#hub-corrected").textContent;
+        if (text && navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                $("#btn-hub-copy").textContent = "Copied!";
+                setTimeout(() => { $("#btn-hub-copy").textContent = "Copy Corrected"; }, 2000);
+            });
+        }
     });
 
     // ── Init ────────────────────────────────────────────────────────────

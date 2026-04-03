@@ -19,6 +19,7 @@
             <button class="tab" data-tab="projects">Projects</button>
             <button class="tab" data-tab="knowledge">Knowledge Base</button>
             <button class="tab" data-tab="chat">Chat</button>
+            <button class="tab" data-tab="hub">AI Hub</button>
             <button class="tab" data-tab="admin">Admin</button>
         </nav>
     </header>
@@ -275,6 +276,92 @@
             <div class="chat-input-row">
                 <textarea id="chat-input" rows="2" placeholder="Type a message..." class="input-wide"></textarea>
                 <button id="btn-send-chat" class="btn btn-primary">Send</button>
+            </div>
+        </section>
+
+        <!-- ==================== AI HUB ==================== -->
+        <section id="tab-hub" class="tab-content">
+            <div class="toolbar">
+                <h2>AI Hub — Check & Fix Responses</h2>
+            </div>
+
+            <!-- Quick links to AI services -->
+            <div class="cards" style="margin-bottom:20px">
+                <a href="https://x.ai" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">Z</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Z.ai / Grok</div><div class="card-label">xAI</div></div>
+                </a>
+                <a href="https://chatgpt.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">G</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">ChatGPT</div><div class="card-label">OpenAI</div></div>
+                </a>
+                <a href="https://claude.ai" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">C</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Claude</div><div class="card-label">Anthropic</div></div>
+                </a>
+                <a href="https://gemini.google.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">G</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Gemini</div><div class="card-label">Google</div></div>
+                </a>
+                <a href="https://chat.deepseek.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">D</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">DeepSeek</div><div class="card-label">DeepSeek</div></div>
+                </a>
+            </div>
+
+            <!-- Response checker -->
+            <div class="form-panel">
+                <h3>Paste AI Response to Check</h3>
+                <label>Original question / task (optional — helps with context):</label>
+                <textarea id="hub-context" rows="2" class="input-wide" placeholder="What did you ask the AI?"></textarea>
+                <label>AI Response to check:</label>
+                <textarea id="hub-response" rows="10" class="input-wide" placeholder="Paste the response from Z.ai, ChatGPT, or any other AI here..."></textarea>
+                <div class="form-row">
+                    <div>
+                        <label>Check type:</label>
+                        <select id="hub-check-type">
+                            <option value="auto">Auto-detect</option>
+                            <option value="code">Code review</option>
+                            <option value="text">Text / facts</option>
+                            <option value="logic">Logic / reasoning</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Model for checking:</label>
+                        <select id="hub-model" class="input-wide">
+                            <option value="">Select model...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-hub-check" class="btn btn-primary">Check & Fix</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="hub-results" class="hidden">
+                <div class="detail-panel" style="margin-top:16px">
+                    <div class="detail-header">
+                        <h3>Check Results</h3>
+                        <span id="hub-score-badge" class="badge"></span>
+                    </div>
+                    <div id="hub-summary" style="margin-bottom:12px;color:var(--text-muted)"></div>
+                    <div id="hub-errors-section" class="hidden">
+                        <h4 style="color:var(--danger);margin-bottom:8px">Errors Found:</h4>
+                        <ul id="hub-errors-list" class="attempt-errors"></ul>
+                    </div>
+                    <div id="hub-warnings-section" class="hidden" style="margin-top:12px">
+                        <h4 style="color:var(--warning);margin-bottom:8px">Warnings:</h4>
+                        <ul id="hub-warnings-list" class="attempt-errors"></ul>
+                    </div>
+                    <div style="margin-top:16px">
+                        <h4 style="margin-bottom:8px">Corrected Version:</h4>
+                        <div id="hub-corrected" class="attempt-response"></div>
+                    </div>
+                    <div class="form-actions" style="margin-top:12px">
+                        <button id="btn-hub-copy" class="btn btn-primary">Copy Corrected</button>
+                    </div>
+                </div>
             </div>
         </section>
 
