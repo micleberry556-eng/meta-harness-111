@@ -59,6 +59,12 @@ PROVIDER_PRESETS: dict[str, dict[str, str]] = {
         "default_model": "deepseek-chat",
         "docs": "https://platform.deepseek.com/docs",
     },
+    "pulumi": {
+        "name": "Pulumi Copilot",
+        "base_url": "https://api.pulumi.com/api/ai",
+        "default_model": "pulumi-copilot",
+        "docs": "https://www.pulumi.com/docs/pulumi-cloud/copilot/",
+    },
     "custom": {
         "name": "Custom OpenAI-compatible",
         "base_url": "",
@@ -328,6 +334,7 @@ class UnifiedClient:
                 "anthropic",
                 "google",
                 "deepseek",
+                "pulumi",
             ) or (
                 len(prefix) == 12 and rest  # provider ID
             ):
