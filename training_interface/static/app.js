@@ -817,6 +817,7 @@
         openai: { name: "OpenAI", base_url: "https://api.openai.com/v1", default_model: "gpt-4o" },
         anthropic: { name: "Anthropic (Claude)", base_url: "https://api.anthropic.com/v1", default_model: "claude-sonnet-4-20250514" },
         google: { name: "Google (Gemini)", base_url: "https://generativelanguage.googleapis.com/v1beta/openai", default_model: "gemini-2.0-flash" },
+        deepseek: { name: "DeepSeek", base_url: "https://api.deepseek.com", default_model: "deepseek-chat" },
         custom: { name: "", base_url: "", default_model: "" },
     };
 

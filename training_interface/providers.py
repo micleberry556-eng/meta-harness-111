@@ -53,6 +53,12 @@ PROVIDER_PRESETS: dict[str, dict[str, str]] = {
         "default_model": "gemini-2.0-flash",
         "docs": "https://ai.google.dev/docs",
     },
+    "deepseek": {
+        "name": "DeepSeek",
+        "base_url": "https://api.deepseek.com",
+        "default_model": "deepseek-chat",
+        "docs": "https://platform.deepseek.com/docs",
+    },
     "custom": {
         "name": "Custom OpenAI-compatible",
         "base_url": "",
@@ -315,7 +321,14 @@ class UnifiedClient:
         if ":" in model_ref:
             # Check if it looks like a provider prefix (not an Ollama tag like "codellama:latest")
             prefix, rest = model_ref.split(":", 1)
-            if prefix in ("ollama", "xai", "openai", "anthropic", "google") or (
+            if prefix in (
+                "ollama",
+                "xai",
+                "openai",
+                "anthropic",
+                "google",
+                "deepseek",
+            ) or (
                 len(prefix) == 12 and rest  # provider ID
             ):
                 return prefix, rest
