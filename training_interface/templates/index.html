@@ -363,9 +363,43 @@
                     </div>
                 </div>
             </div>
-        </section>
+            <!-- Code Assembler -->
+            <div class="form-panel" style="margin-top:20px">
+                <h3>Code Assembler — Paste Code, Build Project, Push to GitHub</h3>
+                <label>Project Name:</label>
+                <input type="text" id="asm-name" class="input-wide" placeholder="My Website">
+                <label>Paste full AI output with code (all files, explanations — everything):</label>
+                <textarea id="asm-code" rows="14" class="input-wide" placeholder="Paste the entire response from Z.ai / ChatGPT / Claude here...&#10;&#10;The program will extract all code files, clean them up,&#10;add missing files (requirements.txt, .gitignore, README),&#10;and assemble a ready-to-push project."></textarea>
+                <label>Extra instructions (optional):</label>
+                <input type="text" id="asm-instructions" class="input-wide" placeholder="e.g. Use port 3000, add Docker support">
+                <div class="form-row">
+                    <div>
+                        <label>Model for parsing:</label>
+                        <select id="asm-model" class="input-wide">
+                            <option value="">Select model...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-asm-assemble" class="btn btn-primary">Assemble Project</button>
+                </div>
+            </div>
 
-        <!-- ==================== ADMIN ==================== -->
+            <!-- Assembled project result -->
+            <div id="asm-result" class="hidden">
+                <div class="detail-panel" style="margin-top:16px">
+                    <div class="detail-header">
+                        <h3 id="asm-result-title">Assembled Project</h3>
+                        <div>
+                            <button id="btn-asm-push" class="btn btn-small btn-primary">Push to GitHub</button>
+                            <button id="btn-asm-view" class="btn btn-small">View in Projects</button>
+                        </div>
+                    </div>
+                    <div id="asm-result-info" style="margin-bottom:12px;color:var(--text-muted)"></div>
+                    <div id="asm-result-files"></div>
+                </div>
+            </div>
+        </section>
         <section id="tab-admin" class="tab-content">
             <div class="toolbar">
                 <h2>Admin Panel</h2>

@@ -140,7 +140,7 @@
             const data = await api("/api/models/all");
             const options = data.models.map((m) => `<option value="${m.ref}">${m.name} (${m.provider_name}${m.size_gb ? ', ' + m.size_gb + ' GB' : ''})</option>`).join("");
             const empty = '<option value="">Select model...</option>';
-            ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model"].forEach((sel) => {
+            ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model", "#asm-model"].forEach((sel) => {
                 const el = $(sel);
                 if (el) el.innerHTML = empty + options;
             });
@@ -150,7 +150,7 @@
                 const data = await api("/api/models");
                 const options = data.models.map((m) => `<option value="${m.name}">${m.name} (${formatBytes(m.size)})</option>`).join("");
                 const empty = '<option value="">Select model...</option>';
-                ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model"].forEach((sel) => {
+                ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model", "#hub-model", "#asm-model"].forEach((sel) => {
                     const el = $(sel);
                     if (el) el.innerHTML = empty + options;
                 });
@@ -1166,6 +1166,87 @@
                 $("#btn-hub-copy").textContent = "Copied!";
                 setTimeout(() => { $("#btn-hub-copy").textContent = "Copy Corrected"; }, 2000);
             });
+        }
+    });
+
+    // ── AI Hub — Code Assembler ────────────────────────────────────────
+    let _lastAssembledProjectId = null;
+
+    $("#btn-asm-assemble").addEventListener("click", async () => {
+        const code = $("#asm-code").value.trim();
+        const name = $("#asm-name").value.trim();
+        const model = $("#asm-model").value;
+        if (!code) return alert("Paste the AI code output");
+        if (!name) return alert("Enter a project name");
+        if (!model) return alert("Select a model");
+
+        $("#btn-asm-assemble").textContent = "Assembling...";
+        $("#btn-asm-assemble").disabled = true;
+        $("#asm-result").classList.add("hidden");
+
+        try {
+            const data = await api("/api/hub/assemble", {
+                method: "POST",
+                body: JSON.stringify({
+                    raw_code: code,
+                    project_name: name,
+                    model: model,
+                    instructions: $("#asm-instructions").value.trim(),
+                }),
+            });
+
+            _lastAssembledProjectId = data.project_id;
+            $("#asm-result").classList.remove("hidden");
+            $("#asm-result-title").textContent = `${data.name} (${data.file_count} files)`;
+            $("#asm-result-info").textContent = `${data.language} · ${data.description}`;
+            $("#asm-result-files").innerHTML = data.files.map((f) =>
+                `<div class="list-item"><div class="list-item-main"><div class="list-item-title">${f}</div></div></div>`
+            ).join("");
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        } finally {
+            $("#btn-asm-assemble").textContent = "Assemble Project";
+            $("#btn-asm-assemble").disabled = false;
+        }
+    });
+
+    $("#btn-asm-view").addEventListener("click", () => {
+        if (!_lastAssembledProjectId) return;
+        // Switch to Projects tab and open this project
+        $$(".tab").forEach((b) => b.classList.remove("active"));
+        $$(".tab-content").forEach((s) => s.classList.remove("active"));
+        document.querySelector('[data-tab="projects"]').classList.add("active");
+        $("#tab-projects").classList.add("active");
+        loadProjects();
+        window._viewProject(_lastAssembledProjectId);
+    });
+
+    $("#btn-asm-push").addEventListener("click", async () => {
+        if (!_lastAssembledProjectId) return;
+        try {
+            const remotes = await api("/api/git/remotes");
+            if (!remotes.remotes.length) {
+                alert("No Git remotes configured. Add one in Admin panel first.");
+                return;
+            }
+            const remoteId = remotes.remotes[0].id;
+            const repoName = prompt("Repository name for GitHub:", $("#asm-name").value.trim().replace(/\s+/g, "-").toLowerCase() || "my-project");
+            if (!repoName) return;
+
+            const result = await api(`/api/hub/assemble/${_lastAssembledProjectId}/push?remote_id=${remoteId}&repo_name=${encodeURIComponent(repoName)}`, {
+                method: "POST",
+            });
+
+            if (result.git_sync && result.git_sync.success) {
+                alert("Pushed to GitHub successfully!");
+            } else if (result.git_sync) {
+                alert("Git push failed: " + result.git_sync.message);
+            } else {
+                alert("Exported to disk: " + result.exported + "\nAdd a Git remote in Admin to push.");
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
         }
     });
 

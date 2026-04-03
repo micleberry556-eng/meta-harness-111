@@ -215,6 +215,13 @@ class CheckResponseRequest(BaseModel):
     model: str = Field(..., description="Model to use for checking")
 
 
+class AssembleProjectRequest(BaseModel):
+    raw_code: str = Field(..., description="Raw code/text from AI to assemble")
+    project_name: str = Field(..., description="Name for the project")
+    model: str = Field(..., description="Model to use for parsing")
+    instructions: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Pages (HTML)
 # ---------------------------------------------------------------------------
@@ -1044,6 +1051,167 @@ async def check_ai_response(req: CheckResponseRequest) -> dict[str, Any]:
             "model": result.model,
             "duration_sec": result.total_duration_ns / 1e9,
         }
+
+
+# ---------------------------------------------------------------------------
+# AI Hub — code assembler (paste code → project → GitHub)
+# ---------------------------------------------------------------------------
+
+_ASSEMBLE_SYSTEM_PROMPT = """\
+You are a project assembler. You receive raw code output from another AI
+(possibly multiple files mixed together with explanations). Your job is to:
+
+1. Extract ALL code files from the text.
+2. Determine the correct file path for each file (e.g. src/main.py, index.html).
+3. Clean up each file — remove markdown fences, line numbers, explanations mixed into code.
+4. Detect the project language and what dependencies are needed.
+5. Generate any missing essential files (requirements.txt, package.json, README.md, .gitignore).
+
+Return a JSON object (no markdown fences) with:
+{
+  "language": "python",
+  "framework": "flask",
+  "files": [
+    {"path": "app.py", "content": "...full clean code..."},
+    {"path": "templates/index.html", "content": "..."},
+    {"path": "requirements.txt", "content": "flask\\n"},
+    {"path": ".gitignore", "content": "__pycache__/\\n.venv/\\n"},
+    {"path": "README.md", "content": "# Project Name\\n..."}
+  ],
+  "run_command": "python app.py",
+  "description": "Brief description of what this project does"
+}
+
+Rules:
+- Every file MUST have a valid relative path and complete content.
+- Do NOT truncate code. Include the FULL content of every file.
+- Add .gitignore appropriate for the language.
+- Add README.md with project name, description, and how to run.
+- Only output the JSON object, nothing else."""
+
+
+@app.post("/api/hub/assemble")
+async def assemble_project(req: AssembleProjectRequest) -> dict[str, Any]:
+    """Parse raw AI code output into a structured project and save it."""
+    from training_interface.ollama_client import ChatMessage
+    from training_interface.projects import Project, ProjectFile
+
+    user_prompt = f"PROJECT NAME: {req.project_name}\n\n"
+    if req.instructions:
+        user_prompt += f"ADDITIONAL INSTRUCTIONS: {req.instructions}\n\n"
+    user_prompt += f"RAW AI OUTPUT TO ASSEMBLE:\n{req.raw_code}"
+
+    messages = [
+        ChatMessage(role="system", content=_ASSEMBLE_SYSTEM_PROMPT),
+        ChatMessage(role="user", content=user_prompt),
+    ]
+
+    try:
+        result = await unified.chat(
+            model_ref=req.model, messages=messages, temperature=0.1, max_tokens=16384
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    # Parse JSON response
+    import json as _json
+
+    raw = result.content.strip()
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        lines = [ln for ln in lines if not ln.strip().startswith("```")]
+        raw = "\n".join(lines).strip()
+
+    try:
+        parsed = _json.loads(raw)
+    except _json.JSONDecodeError:
+        raise HTTPException(
+            status_code=422,
+            detail="Model could not parse the code into a project structure. Try a more capable model or simpler code.",
+        )
+
+    # Build project
+    project = Project(
+        name=req.project_name,
+        description=parsed.get("description", ""),
+        blueprint_name="Assembled from AI output",
+        model_name=req.model,
+        language=parsed.get("language", ""),
+        framework=parsed.get("framework", ""),
+        run_command=parsed.get("run_command", ""),
+        status="completed",
+    )
+
+    for f in parsed.get("files", []):
+        project.files.append(
+            ProjectFile(
+                path=f.get("path", ""),
+                content=f.get("content", ""),
+                generated=True,
+                description=f.get("path", ""),
+            )
+        )
+
+    import time
+
+    project.finished_at = time.time()
+    await proj_store.save(project)
+
+    return {
+        "project_id": project.id,
+        "name": project.name,
+        "file_count": len(project.files),
+        "files": [f.path for f in project.files],
+        "language": project.language,
+        "description": project.description,
+    }
+
+
+@app.post("/api/hub/assemble/{project_id}/push")
+async def push_assembled_project(
+    project_id: str, remote_id: str = "", repo_name: str = "", branch: str = "main"
+) -> dict[str, Any]:
+    """Export an assembled project and push to Git."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Export to disk
+    project_dir = ProjectGenerator.export_to_disk(project, _PROJECTS_DIR)
+
+    if remote_id:
+        remote = await git_store.load(remote_id)
+        if remote is None:
+            raise HTTPException(status_code=404, detail="Git remote not found")
+
+        name = repo_name or project.name.replace(" ", "-").lower()
+        remote_url = remote.repo_url(name)
+
+        sync_result = await GitSync.full_sync(
+            project_dir=project_dir,
+            remote_url=remote_url,
+            branch=branch,
+            commit_message=f"Initial commit: {project.name}",
+        )
+
+        if sync_result.success:
+            safe_url = remote_url
+            if remote.token and safe_url.startswith("https://"):
+                safe_url = safe_url.replace(f"{remote.token}@", "", 1)
+            project.git_remote = safe_url
+            project.git_branch = branch
+            await proj_store.save(project)
+
+        return {
+            "exported": str(project_dir),
+            "git_sync": sync_result.to_dict(),
+        }
+
+    return {
+        "exported": str(project_dir),
+        "git_sync": None,
+        "message": "Exported to disk. Add a Git remote in Admin to push.",
+    }
 
 
 # ---------------------------------------------------------------------------
