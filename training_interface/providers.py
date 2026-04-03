@@ -59,12 +59,6 @@ PROVIDER_PRESETS: dict[str, dict[str, str]] = {
         "default_model": "deepseek-chat",
         "docs": "https://platform.deepseek.com/docs",
     },
-    "meta_llama": {
-        "name": "Meta Llama (official API)",
-        "base_url": "https://api.llama.com/v1",
-        "default_model": "Llama-4-Maverick-17B-128E-Instruct-FP8",
-        "docs": "https://llama.developer.meta.com/docs/overview/",
-    },
     "custom": {
         "name": "Custom OpenAI-compatible",
         "base_url": "",
@@ -334,7 +328,6 @@ class UnifiedClient:
                 "anthropic",
                 "google",
                 "deepseek",
-                "meta_llama",
             ) or (
                 len(prefix) == 12 and rest  # provider ID
             ):
