@@ -1,0 +1,14 @@
+{
+  "name": "code_efficiency",
+  "description": "Evaluates algorithmic efficiency and resource usage",
+  "criteria_template": [
+    "Time complexity meets the requirement: {complexity}",
+    "No unnecessary data copies or allocations",
+    "Uses appropriate data structures"
+  ],
+  "tags": [
+    "code",
+    "performance"
+  ],
+  "id": "edcb6b2fbd1f"
+}

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta-Harness — Training Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Meta-Harness <span class="subtitle">Training Interface</span></h1>
+            <div id="status-indicator" class="status-dot offline" title="Ollama: checking..."></div>
+        </div>
+        <nav>
+            <button class="tab active" data-tab="dashboard">Dashboard</button>
+            <button class="tab" data-tab="models">Models</button>
+            <button class="tab" data-tab="training">Training</button>
+            <button class="tab" data-tab="projects">Projects</button>
+            <button class="tab" data-tab="knowledge">Knowledge Base</button>
+            <button class="tab" data-tab="chat">Chat</button>
+            <button class="tab" data-tab="hub">AI Hub</button>
+            <button class="tab" data-tab="admin">Admin</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ==================== DASHBOARD ==================== -->
+        <section id="tab-dashboard" class="tab-content active">
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icon">🤖</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-models">—</div>
+                        <div class="card-label">Models</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-sessions">—</div>
+                        <div class="card-label">Sessions</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-completed">—</div>
+                        <div class="card-label">Completed</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📚</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-kb">—</div>
+                        <div class="card-label">KB Items</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>Recent Sessions</h2>
+                <div id="recent-sessions" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MODELS ==================== -->
+        <section id="tab-models" class="tab-content">
+            <div class="toolbar">
+                <h2>Ollama Models</h2>
+                <div class="toolbar-actions">
+                    <input type="text" id="pull-model-name" placeholder="e.g. llama3.2, codellama, mistral" class="input-wide">
+                    <button id="btn-pull-model" class="btn btn-primary">Pull Model</button>
+                    <button id="btn-refresh-models" class="btn">Refresh</button>
+                </div>
+            </div>
+            <div id="pull-progress" class="progress-container hidden">
+                <div class="progress-bar"><div class="progress-fill" id="pull-fill"></div></div>
+                <span id="pull-status-text" class="muted"></span>
+            </div>
+            <div id="models-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+        </section>
+
+        <!-- ==================== TRAINING ==================== -->
+        <section id="tab-training" class="tab-content">
+            <div class="toolbar">
+                <h2>Training Sessions</h2>
+                <button id="btn-new-session" class="btn btn-primary">New Session</button>
+            </div>
+
+            <!-- New session form (hidden by default) -->
+            <div id="new-session-form" class="form-panel hidden">
+                <h3>Start New Training Session</h3>
+                <div class="form-tabs">
+                    <button class="form-tab active" data-form="from-kb">From Knowledge Base</button>
+                    <button class="form-tab" data-form="custom">Custom Task</button>
+                </div>
+
+                <!-- From KB -->
+                <div id="form-from-kb" class="form-section">
+                    <label>Select Task:</label>
+                    <select id="kb-task-select" class="input-wide">
+                        <option value="">Loading tasks...</option>
+                    </select>
+                    <label>Model:</label>
+                    <select id="session-model-kb" class="input-wide">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <div class="form-row">
+                        <div>
+                            <label>Max Iterations:</label>
+                            <input type="number" id="session-max-iter-kb" value="5" min="1" max="20">
+                        </div>
+                        <div>
+                            <label>Temperature:</label>
+                            <input type="number" id="session-temp-kb" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                    </div>
+                    <button id="btn-start-kb-session" class="btn btn-primary">Start Training</button>
+                </div>
+
+                <!-- Custom -->
+                <div id="form-custom" class="form-section hidden">
+                    <label>Title:</label>
+                    <input type="text" id="custom-title" class="input-wide" placeholder="Task title">
+                    <label>Instruction:</label>
+                    <textarea id="custom-instruction" rows="4" class="input-wide" placeholder="Describe the task for the model..."></textarea>
+                    <label>Expected Behavior:</label>
+                    <textarea id="custom-expected" rows="2" class="input-wide" placeholder="What a correct response looks like..."></textarea>
+                    <label>Evaluation Criteria (one per line):</label>
+                    <textarea id="custom-criteria" rows="3" class="input-wide" placeholder="Criterion 1&#10;Criterion 2&#10;..."></textarea>
+                    <label>Model:</label>
+                    <select id="session-model-custom" class="input-wide">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <div class="form-row">
+                        <div>
+                            <label>Max Iterations:</label>
+                            <input type="number" id="session-max-iter-custom" value="5" min="1" max="20">
+                        </div>
+                        <div>
+                            <label>Temperature:</label>
+                            <input type="number" id="session-temp-custom" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                    </div>
+                    <button id="btn-start-custom-session" class="btn btn-primary">Start Training</button>
+                </div>
+            </div>
+
+            <!-- Session list -->
+            <div id="sessions-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+
+            <!-- Session detail (hidden by default) -->
+            <div id="session-detail" class="detail-panel hidden">
+                <div class="detail-header">
+                    <h3 id="session-detail-title">Session</h3>
+                    <button id="btn-close-detail" class="btn btn-small">Close</button>
+                </div>
+                <div id="session-detail-body"></div>
+            </div>
+        </section>
+
+        <!-- ==================== KNOWLEDGE BASE ==================== -->
+        <section id="tab-knowledge" class="tab-content">
+            <div class="toolbar">
+                <h2>Knowledge Base</h2>
+                <div class="toolbar-actions">
+                    <button id="btn-add-task" class="btn btn-primary">Add Task</button>
+                    <button id="btn-export-kb" class="btn">Export Archive</button>
+                    <label class="btn btn-file">
+                        Import Archive
+                        <input type="file" id="import-kb-file" accept=".zip" hidden>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Add task form -->
+            <div id="add-task-form" class="form-panel hidden">
+                <h3>Add New Task</h3>
+                <label>Title:</label>
+                <input type="text" id="new-task-title" class="input-wide" placeholder="Task title">
+                <label>Instruction:</label>
+                <textarea id="new-task-instruction" rows="4" class="input-wide" placeholder="Task instruction..."></textarea>
+                <label>Expected Behavior:</label>
+                <textarea id="new-task-expected" rows="2" class="input-wide" placeholder="Expected behavior..."></textarea>
+                <label>Evaluation Criteria (one per line):</label>
+                <textarea id="new-task-criteria" rows="3" class="input-wide" placeholder="Criterion 1&#10;Criterion 2"></textarea>
+                <label>Difficulty:</label>
+                <select id="new-task-difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <label>Tags (comma-separated):</label>
+                <input type="text" id="new-task-tags" class="input-wide" placeholder="python, algorithms">
+                <div class="form-actions">
+                    <button id="btn-save-task" class="btn btn-primary">Save Task</button>
+                    <button id="btn-cancel-task" class="btn">Cancel</button>
+                </div>
+            </div>
+
+            <div class="kb-filters">
+                <select id="kb-filter-kind">
+                    <option value="">All Types</option>
+                    <option value="task">Tasks</option>
+                    <option value="pattern">Patterns</option>
+                    <option value="prompt">Prompts</option>
+                </select>
+            </div>
+            <div id="kb-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+        </section>
+
+        <!-- ==================== PROJECTS ==================== -->
+        <section id="tab-projects" class="tab-content">
+            <div class="toolbar">
+                <h2>Projects</h2>
+                <button id="btn-new-project" class="btn btn-primary">New Project</button>
+            </div>
+
+            <!-- New project form -->
+            <div id="new-project-form" class="form-panel hidden">
+                <h3>Generate New Project</h3>
+                <label>Blueprint:</label>
+                <select id="project-blueprint" class="input-wide">
+                    <option value="">Select blueprint...</option>
+                </select>
+                <div id="blueprint-preview" class="muted" style="font-size:0.85rem;margin:8px 0"></div>
+                <label>Project Name:</label>
+                <input type="text" id="project-name" class="input-wide" placeholder="My Awesome App">
+                <label>Model:</label>
+                <select id="project-model" class="input-wide">
+                    <option value="">Select model...</option>
+                </select>
+                <label>Additional Instructions (optional):</label>
+                <textarea id="project-prompt" rows="3" class="input-wide" placeholder="Describe what you want the app to do..."></textarea>
+                <div class="form-actions">
+                    <button id="btn-generate-project" class="btn btn-primary">Generate</button>
+                    <button id="btn-cancel-project" class="btn">Cancel</button>
+                </div>
+            </div>
+
+            <div id="projects-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+
+            <!-- Project detail -->
+            <div id="project-detail" class="detail-panel hidden">
+                <div class="detail-header">
+                    <h3 id="project-detail-title">Project</h3>
+                    <div>
+                        <button id="btn-sync-project" class="btn btn-small btn-primary">Push to Git</button>
+                        <button id="btn-export-project" class="btn btn-small">Export</button>
+                        <button id="btn-close-project" class="btn btn-small">Close</button>
+                    </div>
+                </div>
+                <div id="project-detail-body"></div>
+            </div>
+        </section>
+
+        <!-- ==================== CHAT ==================== -->
+        <section id="tab-chat" class="tab-content">
+            <div class="toolbar">
+                <h2>Quick Chat</h2>
+                <select id="chat-model" class="input-wide">
+                    <option value="">Select model...</option>
+                </select>
+            </div>
+            <div id="chat-messages" class="chat-container"></div>
+            <div class="chat-input-row">
+                <textarea id="chat-input" rows="2" placeholder="Type a message..." class="input-wide"></textarea>
+                <button id="btn-send-chat" class="btn btn-primary">Send</button>
+            </div>
+        </section>
+
+        <!-- ==================== AI HUB ==================== -->
+        <section id="tab-hub" class="tab-content">
+            <div class="toolbar">
+                <h2>AI Hub — Check & Fix Responses</h2>
+            </div>
+
+            <!-- Quick links to AI services -->
+            <div class="cards" style="margin-bottom:20px">
+                <a href="https://x.ai" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">Z</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Z.ai / Grok</div><div class="card-label">xAI</div></div>
+                </a>
+                <a href="https://chatgpt.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">G</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">ChatGPT</div><div class="card-label">OpenAI</div></div>
+                </a>
+                <a href="https://claude.ai" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">C</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Claude</div><div class="card-label">Anthropic</div></div>
+                </a>
+                <a href="https://gemini.google.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">G</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">Gemini</div><div class="card-label">Google</div></div>
+                </a>
+                <a href="https://chat.deepseek.com" target="_blank" class="card" style="text-decoration:none;cursor:pointer">
+                    <div class="card-icon">D</div>
+                    <div class="card-body"><div class="card-value" style="font-size:1rem">DeepSeek</div><div class="card-label">DeepSeek</div></div>
+                </a>
+            </div>
+
+            <!-- Response checker -->
+            <div class="form-panel">
+                <h3>Paste AI Response to Check</h3>
+                <label>Original question / task (optional — helps with context):</label>
+                <textarea id="hub-context" rows="2" class="input-wide" placeholder="What did you ask the AI?"></textarea>
+                <label>AI Response to check:</label>
+                <textarea id="hub-response" rows="10" class="input-wide" placeholder="Paste the response from Z.ai, ChatGPT, or any other AI here..."></textarea>
+                <div class="form-row">
+                    <div>
+                        <label>Check type:</label>
+                        <select id="hub-check-type">
+                            <option value="auto">Auto-detect</option>
+                            <option value="code">Code review</option>
+                            <option value="text">Text / facts</option>
+                            <option value="logic">Logic / reasoning</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Model for checking:</label>
+                        <select id="hub-model" class="input-wide">
+                            <option value="">Select model...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-hub-check" class="btn btn-primary">Check & Fix</button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="hub-results" class="hidden">
+                <div class="detail-panel" style="margin-top:16px">
+                    <div class="detail-header">
+                        <h3>Check Results</h3>
+                        <span id="hub-score-badge" class="badge"></span>
+                    </div>
+                    <div id="hub-summary" style="margin-bottom:12px;color:var(--text-muted)"></div>
+                    <div id="hub-errors-section" class="hidden">
+                        <h4 style="color:var(--danger);margin-bottom:8px">Errors Found:</h4>
+                        <ul id="hub-errors-list" class="attempt-errors"></ul>
+                    </div>
+                    <div id="hub-warnings-section" class="hidden" style="margin-top:12px">
+                        <h4 style="color:var(--warning);margin-bottom:8px">Warnings:</h4>
+                        <ul id="hub-warnings-list" class="attempt-errors"></ul>
+                    </div>
+                    <div style="margin-top:16px">
+                        <h4 style="margin-bottom:8px">Corrected Version:</h4>
+                        <div id="hub-corrected" class="attempt-response"></div>
+                    </div>
+                    <div class="form-actions" style="margin-top:12px">
+                        <button id="btn-hub-copy" class="btn btn-primary">Copy Corrected</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Code Assembler -->
+            <div class="form-panel" style="margin-top:20px">
+                <h3>Code Assembler — Paste Code, Build Project, Push to GitHub</h3>
+                <label>Project Name:</label>
+                <input type="text" id="asm-name" class="input-wide" placeholder="My Website">
+                <label>Paste full AI output with code (all files, explanations — everything):</label>
+                <textarea id="asm-code" rows="14" class="input-wide" placeholder="Paste the entire response from Z.ai / ChatGPT / Claude here...&#10;&#10;The program will extract all code files, clean them up,&#10;add missing files (requirements.txt, .gitignore, README),&#10;and assemble a ready-to-push project."></textarea>
+                <label>Extra instructions (optional):</label>
+                <input type="text" id="asm-instructions" class="input-wide" placeholder="e.g. Use port 3000, add Docker support">
+                <div class="form-row">
+                    <div>
+                        <label>Model for parsing:</label>
+                        <select id="asm-model" class="input-wide">
+                            <option value="">Select model...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-asm-assemble" class="btn btn-primary">Assemble Project</button>
+                </div>
+            </div>
+
+            <!-- Assembled project result -->
+            <div id="asm-result" class="hidden">
+                <div class="detail-panel" style="margin-top:16px">
+                    <div class="detail-header">
+                        <h3 id="asm-result-title">Assembled Project</h3>
+                        <div>
+                            <button id="btn-asm-push" class="btn btn-small btn-primary">Push to GitHub</button>
+                            <button id="btn-asm-view" class="btn btn-small">View in Projects</button>
+                        </div>
+                    </div>
+                    <div id="asm-result-info" style="margin-bottom:12px;color:var(--text-muted)"></div>
+                    <div id="asm-result-files"></div>
+                </div>
+            </div>
+        </section>
+        <section id="tab-admin" class="tab-content">
+            <div class="toolbar">
+                <h2>Admin Panel</h2>
+            </div>
+            <div class="cards" id="admin-stats">
+                <div class="card"><div class="card-icon">🎯</div><div class="card-body"><div class="card-value" id="admin-sessions">—</div><div class="card-label">Sessions</div></div></div>
+                <div class="card"><div class="card-icon">📁</div><div class="card-body"><div class="card-value" id="admin-projects">—</div><div class="card-label">Projects</div></div></div>
+                <div class="card"><div class="card-icon">📋</div><div class="card-body"><div class="card-value" id="admin-blueprints">—</div><div class="card-label">Blueprints</div></div></div>
+                <div class="card"><div class="card-icon">📚</div><div class="card-body"><div class="card-value" id="admin-kb">—</div><div class="card-label">KB Items</div></div></div>
+                <div class="card"><div class="card-icon">🔗</div><div class="card-body"><div class="card-value" id="admin-remotes">—</div><div class="card-label">Git Remotes</div></div></div>
+            </div>
+
+            <!-- Git Remotes management -->
+            <div class="section">
+                <div class="toolbar">
+                    <h3>Git Remotes</h3>
+                    <button id="btn-add-remote" class="btn btn-primary">Add Remote</button>
+                </div>
+                <div id="add-remote-form" class="form-panel hidden">
+                    <label>Name:</label>
+                    <input type="text" id="remote-name" class="input-wide" placeholder="My GitHub">
+                    <label>Provider:</label>
+                    <select id="remote-provider">
+                        <option value="github">GitHub</option>
+                        <option value="gitlab">GitLab</option>
+                        <option value="bitbucket">Bitbucket</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <label>Owner / Organization:</label>
+                    <input type="text" id="remote-owner" class="input-wide" placeholder="username or org">
+                    <label>Token (Personal Access Token):</label>
+                    <input type="text" id="remote-token" class="input-wide" placeholder="ghp_...">
+                    <label>Custom URL Template (optional):</label>
+                    <input type="text" id="remote-url-template" class="input-wide" placeholder="https://github.com/{owner}/{repo}.git">
+                    <div class="form-actions">
+                        <button id="btn-save-remote" class="btn btn-primary">Save</button>
+                        <button id="btn-cancel-remote" class="btn">Cancel</button>
+                    </div>
+                </div>
+                <div id="remotes-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- API Providers -->
+            <div class="section">
+                <div class="toolbar">
+                    <h3>API Providers (Z.ai, OpenAI, Anthropic, Google)</h3>
+                    <button id="btn-add-provider" class="btn btn-primary">Add Provider</button>
+                </div>
+                <div id="add-provider-form" class="form-panel hidden">
+                    <label>Provider Type:</label>
+                    <select id="provider-type">
+                        <option value="xai">Z.ai / Grok (xAI)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="google">Google (Gemini)</option>
+                        <option value="deepseek">DeepSeek</option>
+                        <option value="custom">Custom OpenAI-compatible</option>
+                    </select>
+                    <label>Name (optional):</label>
+                    <input type="text" id="provider-name" class="input-wide" placeholder="Auto-filled from type">
+                    <label>API Key:</label>
+                    <input type="text" id="provider-api-key" class="input-wide" placeholder="xai-..., sk-..., etc.">
+                    <label>Base URL (auto-filled, edit for custom):</label>
+                    <input type="text" id="provider-base-url" class="input-wide" placeholder="https://api.x.ai/v1">
+                    <label>Default Model:</label>
+                    <input type="text" id="provider-default-model" class="input-wide" placeholder="grok-3-latest">
+                    <label>Additional Models (comma-separated, optional):</label>
+                    <input type="text" id="provider-models" class="input-wide" placeholder="grok-3-latest, grok-2-latest">
+                    <div class="form-actions">
+                        <button id="btn-save-provider" class="btn btn-primary">Save</button>
+                        <button id="btn-cancel-provider" class="btn">Cancel</button>
+                    </div>
+                </div>
+                <div id="providers-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Blueprints management -->
+            <div class="section">
+                <h3>Blueprints</h3>
+                <div id="admin-blueprints-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- KB Items management -->
+            <div class="section">
+                <h3>Knowledge Base Items</h3>
+                <div id="admin-kb-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Edit modal -->
+            <div id="edit-modal" class="form-panel hidden" style="position:fixed;top:10%;left:10%;right:10%;bottom:10%;z-index:200;overflow-y:auto">
+                <div class="detail-header">
+                    <h3 id="edit-modal-title">Edit Item</h3>
+                    <button id="btn-close-edit" class="btn btn-small">Close</button>
+                </div>
+                <div id="edit-modal-body"></div>
+                <div class="form-actions" style="margin-top:16px">
+                    <button id="btn-save-edit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "code_correctness",
+  "description": "Evaluates whether generated code is syntactically and logically correct",
+  "criteria_template": [
+    "Code is syntactically valid {language}",
+    "No undefined variables or functions",
+    "Handles edge cases (empty input, None, zero)",
+    "Follows {language} naming conventions"
+  ],
+  "tags": [
+    "code",
+    "correctness"
+  ],
+  "id": "83544bd554c3"
+}

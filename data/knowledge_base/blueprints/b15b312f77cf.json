@@ -1,0 +1,61 @@
+{
+  "name": "Telegram Bot",
+  "category": "bot",
+  "description": "Telegram bot with command handlers, inline keyboards, and database storage",
+  "language": "python",
+  "framework": "aiogram",
+  "files": [
+    {
+      "path": "bot/main.py",
+      "description": "Bot entry point and dispatcher",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "bot/handlers.py",
+      "description": "Message and command handlers",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "bot/keyboards.py",
+      "description": "Inline and reply keyboards",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "bot/database.py",
+      "description": "SQLite database for user data",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "bot/config.py",
+      "description": "Configuration and environment variables",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "aiogram>=3.0\naiosqlite\n"
+    }
+  ],
+  "dependencies": [
+    "aiogram",
+    "aiosqlite"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "python -m bot.main",
+  "system_prompt": "You are an expert Telegram bot developer. Generate a complete Telegram bot using aiogram 3. Include command handlers (/start, /help), inline keyboards for navigation, user state management with FSM, and SQLite storage for user data. Follow aiogram 3 best practices.",
+  "tags": [
+    "python",
+    "bot",
+    "telegram",
+    "aiogram"
+  ],
+  "id": "b15b312f77cf"
+}

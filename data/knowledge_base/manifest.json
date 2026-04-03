@@ -1,0 +1,166 @@
+{
+  "version": "1.0",
+  "exported_at": 1775213941.5388286,
+  "entries": [
+    {
+      "id": "77ada7a58c90",
+      "kind": "task",
+      "name": "FizzBuzz Implementation",
+      "tags": [
+        "python",
+        "basics",
+        "algorithms"
+      ],
+      "created_at": 1775213941.5377743
+    },
+    {
+      "id": "bca1233aa50c",
+      "kind": "task",
+      "name": "Binary Search",
+      "tags": [
+        "python",
+        "algorithms",
+        "search"
+      ],
+      "created_at": 1775213941.5378847
+    },
+    {
+      "id": "eadedb34422c",
+      "kind": "task",
+      "name": "REST API Error Handler",
+      "tags": [
+        "python",
+        "web",
+        "error-handling"
+      ],
+      "created_at": 1775213941.537971
+    },
+    {
+      "id": "d21bce69a2a3",
+      "kind": "task",
+      "name": "Linked List Reversal",
+      "tags": [
+        "python",
+        "data-structures",
+        "linked-list"
+      ],
+      "created_at": 1775213941.5380473
+    },
+    {
+      "id": "3d4a61fccba5",
+      "kind": "task",
+      "name": "LRU Cache Implementation",
+      "tags": [
+        "python",
+        "data-structures",
+        "cache",
+        "design"
+      ],
+      "created_at": 1775213941.5381203
+    },
+    {
+      "id": "58fbcc3af575",
+      "kind": "task",
+      "name": "Bash Log Analyzer",
+      "tags": [
+        "bash",
+        "linux",
+        "log-analysis"
+      ],
+      "created_at": 1775213941.5382001
+    },
+    {
+      "id": "163919f457a5",
+      "kind": "task",
+      "name": "SQL Query Optimization",
+      "tags": [
+        "sql",
+        "postgresql",
+        "optimization"
+      ],
+      "created_at": 1775213941.538271
+    },
+    {
+      "id": "8871593dac1e",
+      "kind": "task",
+      "name": "Concurrent Web Scraper",
+      "tags": [
+        "python",
+        "async",
+        "networking",
+        "concurrency"
+      ],
+      "created_at": 1775213941.538368
+    },
+    {
+      "id": "83544bd554c3",
+      "kind": "pattern",
+      "name": "code_correctness",
+      "tags": [
+        "code",
+        "correctness"
+      ],
+      "created_at": 1775213941.5384398
+    },
+    {
+      "id": "edcb6b2fbd1f",
+      "kind": "pattern",
+      "name": "code_efficiency",
+      "tags": [
+        "code",
+        "performance"
+      ],
+      "created_at": 1775213941.5385063
+    },
+    {
+      "id": "b7ada88519a3",
+      "kind": "pattern",
+      "name": "explanation_quality",
+      "tags": [
+        "explanation",
+        "documentation"
+      ],
+      "created_at": 1775213941.5385685
+    },
+    {
+      "id": "f1b1cc2ee410",
+      "kind": "pattern",
+      "name": "bash_scripting",
+      "tags": [
+        "bash",
+        "scripting"
+      ],
+      "created_at": 1775213941.5386343
+    },
+    {
+      "id": "80f756ff7423",
+      "kind": "prompt",
+      "name": "strict_evaluator",
+      "tags": [
+        "evaluation",
+        "code"
+      ],
+      "created_at": 1775213941.5386999
+    },
+    {
+      "id": "a52215c8d20d",
+      "kind": "prompt",
+      "name": "gentle_corrector",
+      "tags": [
+        "correction",
+        "teaching"
+      ],
+      "created_at": 1775213941.5387604
+    },
+    {
+      "id": "0b0e313b5bde",
+      "kind": "prompt",
+      "name": "step_by_step",
+      "tags": [
+        "reasoning",
+        "methodology"
+      ],
+      "created_at": 1775213941.538827
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "title": "SQL Query Optimization",
+  "instruction": "Given a PostgreSQL table 'orders' with columns (id, user_id, amount, created_at, status), write an optimized query that finds the total amount and order count per user for the last 30 days, but only for users who have placed more than 5 orders in that period. Include appropriate index suggestions as SQL comments.",
+  "expected_behavior": "A query using GROUP BY with HAVING clause, date filtering with appropriate functions, and index recommendations.",
+  "evaluation_criteria": [
+    "Filters orders from the last 30 days",
+    "Groups by user_id",
+    "Calculates SUM(amount) and COUNT(*)",
+    "Uses HAVING to filter users with > 5 orders",
+    "Suggests at least one relevant index",
+    "Query is syntactically valid PostgreSQL"
+  ],
+  "difficulty": "medium",
+  "tags": [
+    "sql",
+    "postgresql",
+    "optimization"
+  ],
+  "id": "163919f457a5"
+}

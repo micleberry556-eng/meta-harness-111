@@ -1,0 +1,20 @@
+{
+  "title": "Linked List Reversal",
+  "instruction": "Implement a singly linked list in Python with a Node class (val, next) and a function reverse_list(head) that reverses the list in-place and returns the new head. Also implement a to_list(head) helper that converts the linked list to a Python list for easy verification.",
+  "expected_behavior": "Correct in-place reversal using iterative pointer manipulation. Handles None head and single-node lists.",
+  "evaluation_criteria": [
+    "Node class has val and next attributes",
+    "reverse_list reverses the list in-place",
+    "Returns the new head node",
+    "Handles empty list (None head)",
+    "Handles single-node list",
+    "to_list helper works correctly"
+  ],
+  "difficulty": "medium",
+  "tags": [
+    "python",
+    "data-structures",
+    "linked-list"
+  ],
+  "id": "d21bce69a2a3"
+}

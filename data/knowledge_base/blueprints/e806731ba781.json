@@ -1,0 +1,61 @@
+{
+  "name": "CLI Tool",
+  "category": "cli",
+  "description": "Command-line application with argument parsing, subcommands, and colored output",
+  "language": "python",
+  "framework": "click",
+  "files": [
+    {
+      "path": "cli/main.py",
+      "description": "CLI entry point with Click commands",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "cli/commands.py",
+      "description": "Subcommand implementations",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "cli/utils.py",
+      "description": "Utility functions and helpers",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "cli/config.py",
+      "description": "Configuration file management",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "setup.py",
+      "description": "Package setup with entry points",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "click\nrich\n"
+    }
+  ],
+  "dependencies": [
+    "click",
+    "rich"
+  ],
+  "build_commands": [
+    "pip install -e ."
+  ],
+  "run_command": "python -m cli.main",
+  "system_prompt": "You are an expert CLI developer. Generate a complete command-line tool using Click and Rich. Include subcommands, argument/option parsing, colored output with Rich, configuration file support, and proper error handling. Make it user-friendly with help text.",
+  "tags": [
+    "python",
+    "cli",
+    "tool",
+    "click"
+  ],
+  "id": "e806731ba781"
+}

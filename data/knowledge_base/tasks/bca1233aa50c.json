@@ -1,0 +1,20 @@
+{
+  "title": "Binary Search",
+  "instruction": "Implement a binary search function in Python: binary_search(arr, target) that returns the index of target in a sorted list arr, or -1 if not found. Do not use built-in bisect.",
+  "expected_behavior": "An iterative or recursive binary search with O(log n) complexity that correctly handles empty arrays and single-element arrays.",
+  "evaluation_criteria": [
+    "Function signature is binary_search(arr, target)",
+    "Uses binary search algorithm (not linear scan)",
+    "Returns correct index when target is found",
+    "Returns -1 when target is not found",
+    "Handles empty list correctly",
+    "Handles single-element list correctly"
+  ],
+  "difficulty": "easy",
+  "tags": [
+    "python",
+    "algorithms",
+    "search"
+  ],
+  "id": "bca1233aa50c"
+}

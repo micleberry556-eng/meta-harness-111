@@ -1,0 +1,75 @@
+{
+  "name": "Node.js Express API",
+  "category": "api",
+  "description": "REST API with Express.js, MongoDB/SQLite, and JWT authentication",
+  "language": "javascript",
+  "framework": "express",
+  "files": [
+    {
+      "path": "src/index.js",
+      "description": "Express server entry point",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/routes/auth.js",
+      "description": "Authentication routes",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/routes/items.js",
+      "description": "CRUD routes",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/middleware/auth.js",
+      "description": "JWT middleware",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/models/User.js",
+      "description": "User model",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/models/Item.js",
+      "description": "Item model",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/db.js",
+      "description": "Database connection",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "package.json",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "{\"name\":\"api\",\"version\":\"1.0.0\",\"main\":\"src/index.js\",\"scripts\":{\"start\":\"node src/index.js\",\"dev\":\"nodemon src/index.js\"},\"dependencies\":{\"express\":\"^4\",\"better-sqlite3\":\"^11\",\"jsonwebtoken\":\"^9\",\"bcryptjs\":\"^2\",\"cors\":\"^2\"}}"
+    }
+  ],
+  "dependencies": [
+    "express",
+    "better-sqlite3",
+    "jsonwebtoken",
+    "bcryptjs"
+  ],
+  "build_commands": [
+    "npm install"
+  ],
+  "run_command": "npm start",
+  "system_prompt": "You are an expert Node.js developer. Generate a complete REST API with Express.js. Use better-sqlite3 for database, JWT for authentication, and follow Express best practices. Include proper middleware, error handling, and input validation.",
+  "tags": [
+    "javascript",
+    "api",
+    "express",
+    "nodejs"
+  ],
+  "id": "85982c756db0"
+}

@@ -1,0 +1,76 @@
+{
+  "name": "FastAPI Web Application",
+  "category": "web-app",
+  "description": "Full-stack web application with FastAPI backend, Jinja2 templates, and SQLite database",
+  "language": "python",
+  "framework": "fastapi",
+  "files": [
+    {
+      "path": "app/main.py",
+      "description": "FastAPI application entry point with routes",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/models.py",
+      "description": "SQLAlchemy/Pydantic data models",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/database.py",
+      "description": "Database connection and session management",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/base.html",
+      "description": "Base HTML template with navigation",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/index.html",
+      "description": "Home page template",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/static/style.css",
+      "description": "Application styles",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Python dependencies",
+      "generate": false,
+      "content": "fastapi\nuvicorn[standard]\njinja2\nsqlalchemy\naiosqlite\npython-multipart\n"
+    },
+    {
+      "path": "README.md",
+      "description": "Project documentation",
+      "generate": true,
+      "content": ""
+    }
+  ],
+  "dependencies": [
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "sqlalchemy",
+    "aiosqlite"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "uvicorn app.main:app --reload",
+  "system_prompt": "You are an expert Python web developer. Generate a complete FastAPI web application. Use SQLAlchemy for ORM, Jinja2 for templates, and follow REST best practices. Include proper error handling, input validation with Pydantic, and clean HTML/CSS.",
+  "tags": [
+    "python",
+    "web",
+    "fastapi",
+    "fullstack"
+  ],
+  "id": "7f48bf8a3c82"
+}

@@ -1,0 +1,74 @@
+{
+  "name": "Android App (Kotlin)",
+  "category": "android",
+  "description": "Android application with Kotlin, Jetpack Compose, and MVVM architecture",
+  "language": "kotlin",
+  "framework": "android-jetpack",
+  "files": [
+    {
+      "path": "app/src/main/java/com/app/MainActivity.kt",
+      "description": "Main activity with Compose UI",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/src/main/java/com/app/ui/theme/Theme.kt",
+      "description": "Material Design theme",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/src/main/java/com/app/ui/screens/HomeScreen.kt",
+      "description": "Home screen composable",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/src/main/java/com/app/viewmodel/MainViewModel.kt",
+      "description": "ViewModel with state management",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/src/main/java/com/app/data/Repository.kt",
+      "description": "Data repository",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "description": "Android manifest",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/build.gradle.kts",
+      "description": "App-level Gradle build file",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "build.gradle.kts",
+      "description": "Project-level Gradle build file",
+      "generate": true,
+      "content": ""
+    }
+  ],
+  "dependencies": [
+    "jetpack-compose",
+    "lifecycle-viewmodel",
+    "navigation-compose"
+  ],
+  "build_commands": [
+    "./gradlew assembleDebug"
+  ],
+  "run_command": "./gradlew installDebug",
+  "system_prompt": "You are an expert Android developer. Generate a complete Android application using Kotlin and Jetpack Compose. Use MVVM architecture, Material Design 3, and follow Android best practices. Include proper state management with ViewModel and clean navigation.",
+  "tags": [
+    "kotlin",
+    "android",
+    "mobile",
+    "jetpack-compose"
+  ],
+  "id": "83688c0a43ac"
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Bash Log Analyzer",
+  "instruction": "Write a bash script that reads an nginx access log from stdin and outputs the top 10 IP addresses by request count, formatted as 'COUNT IP' per line, sorted descending. Assume standard combined log format where IP is the first field.",
+  "expected_behavior": "A concise bash one-liner or short script using awk, sort, uniq, and head to extract and rank IPs.",
+  "evaluation_criteria": [
+    "Reads from stdin (not a hardcoded file)",
+    "Extracts the first field (IP address)",
+    "Counts occurrences of each IP",
+    "Sorts by count in descending order",
+    "Limits output to top 10",
+    "Output format is 'COUNT IP' per line"
+  ],
+  "difficulty": "medium",
+  "tags": [
+    "bash",
+    "linux",
+    "log-analysis"
+  ],
+  "id": "58fbcc3af575"
+}

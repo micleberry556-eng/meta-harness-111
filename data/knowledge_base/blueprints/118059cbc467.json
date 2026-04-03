@@ -1,0 +1,66 @@
+{
+  "name": "2D Game (Python/Pygame)",
+  "category": "game",
+  "description": "2D game with Pygame — game loop, sprites, collision detection, and scoring",
+  "language": "python",
+  "framework": "pygame",
+  "files": [
+    {
+      "path": "main.py",
+      "description": "Game entry point and main loop",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "game/engine.py",
+      "description": "Game engine with update/render cycle",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "game/sprites.py",
+      "description": "Player, enemy, and projectile sprites",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "game/levels.py",
+      "description": "Level management and progression",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "game/ui.py",
+      "description": "HUD, menus, and score display",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "game/assets.py",
+      "description": "Asset loading (images, sounds)",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "pygame\n"
+    }
+  ],
+  "dependencies": [
+    "pygame"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "python main.py",
+  "system_prompt": "You are an expert game developer. Generate a complete 2D game using Pygame. Include a proper game loop with delta time, sprite classes with collision detection, a scoring system, multiple levels, and a start/game-over menu. Use clean OOP design.",
+  "tags": [
+    "python",
+    "game",
+    "pygame",
+    "2d"
+  ],
+  "id": "118059cbc467"
+}

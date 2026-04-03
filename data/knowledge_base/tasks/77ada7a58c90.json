@@ -1,0 +1,20 @@
+{
+  "title": "FizzBuzz Implementation",
+  "instruction": "Write a Python function called fizzbuzz(n) that returns a list of strings for numbers 1 to n. For multiples of 3 use 'Fizz', for multiples of 5 use 'Buzz', for multiples of both use 'FizzBuzz', otherwise use the string representation of the number.",
+  "expected_behavior": "A correct Python function that handles all cases including edge cases like n=0 and n=1.",
+  "evaluation_criteria": [
+    "Function is named fizzbuzz and accepts one integer argument",
+    "Returns a list of strings",
+    "Correctly handles multiples of 3 (Fizz)",
+    "Correctly handles multiples of 5 (Buzz)",
+    "Correctly handles multiples of 15 (FizzBuzz)",
+    "Handles edge case n=0 (returns empty list)"
+  ],
+  "difficulty": "easy",
+  "tags": [
+    "python",
+    "basics",
+    "algorithms"
+  ],
+  "id": "77ada7a58c90"
+}

@@ -1,0 +1,22 @@
+{
+  "title": "LRU Cache Implementation",
+  "instruction": "Implement an LRU (Least Recently Used) cache in Python as a class LRUCache(capacity). It should support get(key) and put(key, value) operations, both in O(1) average time. When the cache exceeds capacity, evict the least recently used item.",
+  "expected_behavior": "A class using OrderedDict or a doubly-linked list + hash map that provides O(1) get and put with correct LRU eviction.",
+  "evaluation_criteria": [
+    "Class is named LRUCache with capacity parameter",
+    "get(key) returns value or -1 if not found",
+    "put(key, value) inserts or updates",
+    "Evicts least recently used item when over capacity",
+    "get() marks item as recently used",
+    "put() on existing key marks it as recently used",
+    "Operations are O(1) average time"
+  ],
+  "difficulty": "hard",
+  "tags": [
+    "python",
+    "data-structures",
+    "cache",
+    "design"
+  ],
+  "id": "3d4a61fccba5"
+}

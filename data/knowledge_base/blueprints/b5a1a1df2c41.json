@@ -1,0 +1,81 @@
+{
+  "name": "React SPA",
+  "category": "web-app",
+  "description": "Single-page application with React, React Router, and REST API integration",
+  "language": "javascript",
+  "framework": "react",
+  "files": [
+    {
+      "path": "src/App.jsx",
+      "description": "Root component with routing",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/index.jsx",
+      "description": "Entry point",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/components/Header.jsx",
+      "description": "Navigation header component",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/components/Footer.jsx",
+      "description": "Footer component",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/pages/Home.jsx",
+      "description": "Home page component",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/pages/About.jsx",
+      "description": "About page component",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/api/client.js",
+      "description": "API client for backend communication",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "src/styles/App.css",
+      "description": "Application styles",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "package.json",
+      "description": "Node.js dependencies",
+      "generate": false,
+      "content": "{\"name\":\"app\",\"version\":\"1.0.0\",\"private\":true,\"dependencies\":{\"react\":\"^18\",\"react-dom\":\"^18\",\"react-router-dom\":\"^6\"},\"scripts\":{\"start\":\"react-scripts start\",\"build\":\"react-scripts build\"}}"
+    }
+  ],
+  "dependencies": [
+    "react",
+    "react-dom",
+    "react-router-dom"
+  ],
+  "build_commands": [
+    "npm install",
+    "npm run build"
+  ],
+  "run_command": "npm start",
+  "system_prompt": "You are an expert React developer. Generate a complete single-page application with React 18. Use functional components with hooks, React Router for navigation, and clean modular CSS. Follow modern React best practices.",
+  "tags": [
+    "javascript",
+    "web",
+    "react",
+    "spa"
+  ],
+  "id": "b5a1a1df2c41"
+}

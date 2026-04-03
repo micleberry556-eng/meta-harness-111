@@ -1,0 +1,15 @@
+{
+  "name": "bash_scripting",
+  "description": "Evaluates bash/shell script quality",
+  "criteria_template": [
+    "Script is POSIX-compatible or uses correct shebang",
+    "Handles errors (set -e or explicit checks)",
+    "Quotes variables to prevent word splitting",
+    "Uses appropriate tools (awk, sed, grep) idiomatically"
+  ],
+  "tags": [
+    "bash",
+    "scripting"
+  ],
+  "id": "f1b1cc2ee410"
+}

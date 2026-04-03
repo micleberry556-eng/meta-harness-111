@@ -1,0 +1,76 @@
+{
+  "name": "REST API Service",
+  "category": "api",
+  "description": "RESTful API with authentication, CRUD operations, and OpenAPI documentation",
+  "language": "python",
+  "framework": "fastapi",
+  "files": [
+    {
+      "path": "app/main.py",
+      "description": "FastAPI app with API router",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/models.py",
+      "description": "SQLAlchemy and Pydantic models",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/database.py",
+      "description": "Database connection",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/auth.py",
+      "description": "JWT authentication",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/routes/items.py",
+      "description": "CRUD routes for items",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/routes/users.py",
+      "description": "User management routes",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "tests/test_api.py",
+      "description": "API tests with pytest",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "fastapi\nuvicorn[standard]\nsqlalchemy\naiosqlite\npython-jose\npasslib[bcrypt]\npytest\nhttpx\n"
+    }
+  ],
+  "dependencies": [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "python-jose",
+    "passlib"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "uvicorn app.main:app --reload",
+  "system_prompt": "You are an expert API developer. Generate a complete RESTful API with FastAPI. Include JWT authentication, full CRUD operations, input validation with Pydantic, proper error handling, pagination, and pytest tests. Follow OpenAPI best practices.",
+  "tags": [
+    "python",
+    "api",
+    "rest",
+    "fastapi"
+  ],
+  "id": "6dde2ad2a0b9"
+}
