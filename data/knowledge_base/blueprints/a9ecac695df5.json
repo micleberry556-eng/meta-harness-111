@@ -1,0 +1,73 @@
+{
+  "name": "Flask Website",
+  "category": "website",
+  "description": "Multi-page website with Flask, Bootstrap, and SQLite",
+  "language": "python",
+  "framework": "flask",
+  "files": [
+    {
+      "path": "app.py",
+      "description": "Flask application with routes and views",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "models.py",
+      "description": "Database models",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "templates/base.html",
+      "description": "Base template with Bootstrap",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "templates/index.html",
+      "description": "Home page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "templates/about.html",
+      "description": "About page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "static/css/style.css",
+      "description": "Custom styles",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "static/js/main.js",
+      "description": "Client-side JavaScript",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "flask\nflask-sqlalchemy\n"
+    }
+  ],
+  "dependencies": [
+    "flask",
+    "flask-sqlalchemy"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "python app.py",
+  "system_prompt": "You are an expert web developer. Generate a complete Flask website with multiple pages. Use Bootstrap 5 for responsive design, Flask-SQLAlchemy for database, and include proper navigation, footer, and clean semantic HTML.",
+  "tags": [
+    "python",
+    "web",
+    "flask",
+    "website"
+  ],
+  "id": "a9ecac695df5"
+}

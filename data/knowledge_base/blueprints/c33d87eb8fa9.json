@@ -1,0 +1,103 @@
+{
+  "name": "Online Store (E-commerce)",
+  "category": "store",
+  "description": "E-commerce web application with product catalog, cart, checkout, and admin panel",
+  "language": "python",
+  "framework": "fastapi",
+  "files": [
+    {
+      "path": "app/main.py",
+      "description": "FastAPI app with store routes",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/models.py",
+      "description": "Product, Cart, Order models",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/database.py",
+      "description": "Database setup",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/auth.py",
+      "description": "User authentication and sessions",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/cart.py",
+      "description": "Shopping cart logic",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/base.html",
+      "description": "Base template with store layout",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/catalog.html",
+      "description": "Product catalog page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/product.html",
+      "description": "Single product page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/cart.html",
+      "description": "Shopping cart page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/templates/checkout.html",
+      "description": "Checkout page",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "app/static/css/store.css",
+      "description": "Store styles",
+      "generate": true,
+      "content": ""
+    },
+    {
+      "path": "requirements.txt",
+      "description": "Dependencies",
+      "generate": false,
+      "content": "fastapi\nuvicorn[standard]\njinja2\nsqlalchemy\naiosqlite\npython-multipart\npython-jose\npasslib[bcrypt]\n"
+    }
+  ],
+  "dependencies": [
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "sqlalchemy",
+    "aiosqlite",
+    "python-jose",
+    "passlib"
+  ],
+  "build_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "run_command": "uvicorn app.main:app --reload",
+  "system_prompt": "You are an expert e-commerce developer. Generate a complete online store with product catalog, shopping cart, user authentication, and checkout flow. Use FastAPI with SQLAlchemy, Jinja2 templates, and clean responsive CSS. Include product search, categories, and order management.",
+  "tags": [
+    "python",
+    "web",
+    "ecommerce",
+    "store",
+    "fastapi"
+  ],
+  "id": "c33d87eb8fa9"
+}

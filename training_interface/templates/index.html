@@ -16,8 +16,10 @@
             <button class="tab active" data-tab="dashboard">Dashboard</button>
             <button class="tab" data-tab="models">Models</button>
             <button class="tab" data-tab="training">Training</button>
+            <button class="tab" data-tab="projects">Projects</button>
             <button class="tab" data-tab="knowledge">Knowledge Base</button>
             <button class="tab" data-tab="chat">Chat</button>
+            <button class="tab" data-tab="admin">Admin</button>
         </nav>
     </header>
 
@@ -214,6 +216,53 @@
             </div>
         </section>
 
+        <!-- ==================== PROJECTS ==================== -->
+        <section id="tab-projects" class="tab-content">
+            <div class="toolbar">
+                <h2>Projects</h2>
+                <button id="btn-new-project" class="btn btn-primary">New Project</button>
+            </div>
+
+            <!-- New project form -->
+            <div id="new-project-form" class="form-panel hidden">
+                <h3>Generate New Project</h3>
+                <label>Blueprint:</label>
+                <select id="project-blueprint" class="input-wide">
+                    <option value="">Select blueprint...</option>
+                </select>
+                <div id="blueprint-preview" class="muted" style="font-size:0.85rem;margin:8px 0"></div>
+                <label>Project Name:</label>
+                <input type="text" id="project-name" class="input-wide" placeholder="My Awesome App">
+                <label>Model:</label>
+                <select id="project-model" class="input-wide">
+                    <option value="">Select model...</option>
+                </select>
+                <label>Additional Instructions (optional):</label>
+                <textarea id="project-prompt" rows="3" class="input-wide" placeholder="Describe what you want the app to do..."></textarea>
+                <div class="form-actions">
+                    <button id="btn-generate-project" class="btn btn-primary">Generate</button>
+                    <button id="btn-cancel-project" class="btn">Cancel</button>
+                </div>
+            </div>
+
+            <div id="projects-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+
+            <!-- Project detail -->
+            <div id="project-detail" class="detail-panel hidden">
+                <div class="detail-header">
+                    <h3 id="project-detail-title">Project</h3>
+                    <div>
+                        <button id="btn-sync-project" class="btn btn-small btn-primary">Push to Git</button>
+                        <button id="btn-export-project" class="btn btn-small">Export</button>
+                        <button id="btn-close-project" class="btn btn-small">Close</button>
+                    </div>
+                </div>
+                <div id="project-detail-body"></div>
+            </div>
+        </section>
+
         <!-- ==================== CHAT ==================== -->
         <section id="tab-chat" class="tab-content">
             <div class="toolbar">
@@ -226,6 +275,80 @@
             <div class="chat-input-row">
                 <textarea id="chat-input" rows="2" placeholder="Type a message..." class="input-wide"></textarea>
                 <button id="btn-send-chat" class="btn btn-primary">Send</button>
+            </div>
+        </section>
+
+        <!-- ==================== ADMIN ==================== -->
+        <section id="tab-admin" class="tab-content">
+            <div class="toolbar">
+                <h2>Admin Panel</h2>
+            </div>
+            <div class="cards" id="admin-stats">
+                <div class="card"><div class="card-icon">🎯</div><div class="card-body"><div class="card-value" id="admin-sessions">—</div><div class="card-label">Sessions</div></div></div>
+                <div class="card"><div class="card-icon">📁</div><div class="card-body"><div class="card-value" id="admin-projects">—</div><div class="card-label">Projects</div></div></div>
+                <div class="card"><div class="card-icon">📋</div><div class="card-body"><div class="card-value" id="admin-blueprints">—</div><div class="card-label">Blueprints</div></div></div>
+                <div class="card"><div class="card-icon">📚</div><div class="card-body"><div class="card-value" id="admin-kb">—</div><div class="card-label">KB Items</div></div></div>
+                <div class="card"><div class="card-icon">🔗</div><div class="card-body"><div class="card-value" id="admin-remotes">—</div><div class="card-label">Git Remotes</div></div></div>
+            </div>
+
+            <!-- Git Remotes management -->
+            <div class="section">
+                <div class="toolbar">
+                    <h3>Git Remotes</h3>
+                    <button id="btn-add-remote" class="btn btn-primary">Add Remote</button>
+                </div>
+                <div id="add-remote-form" class="form-panel hidden">
+                    <label>Name:</label>
+                    <input type="text" id="remote-name" class="input-wide" placeholder="My GitHub">
+                    <label>Provider:</label>
+                    <select id="remote-provider">
+                        <option value="github">GitHub</option>
+                        <option value="gitlab">GitLab</option>
+                        <option value="bitbucket">Bitbucket</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <label>Owner / Organization:</label>
+                    <input type="text" id="remote-owner" class="input-wide" placeholder="username or org">
+                    <label>Token (Personal Access Token):</label>
+                    <input type="text" id="remote-token" class="input-wide" placeholder="ghp_...">
+                    <label>Custom URL Template (optional):</label>
+                    <input type="text" id="remote-url-template" class="input-wide" placeholder="https://github.com/{owner}/{repo}.git">
+                    <div class="form-actions">
+                        <button id="btn-save-remote" class="btn btn-primary">Save</button>
+                        <button id="btn-cancel-remote" class="btn">Cancel</button>
+                    </div>
+                </div>
+                <div id="remotes-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Blueprints management -->
+            <div class="section">
+                <h3>Blueprints</h3>
+                <div id="admin-blueprints-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- KB Items management -->
+            <div class="section">
+                <h3>Knowledge Base Items</h3>
+                <div id="admin-kb-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Edit modal -->
+            <div id="edit-modal" class="form-panel hidden" style="position:fixed;top:10%;left:10%;right:10%;bottom:10%;z-index:200;overflow-y:auto">
+                <div class="detail-header">
+                    <h3 id="edit-modal-title">Edit Item</h3>
+                    <button id="btn-close-edit" class="btn btn-small">Close</button>
+                </div>
+                <div id="edit-modal-body"></div>
+                <div class="form-actions" style="margin-top:16px">
+                    <button id="btn-save-edit" class="btn btn-primary">Save Changes</button>
+                </div>
             </div>
         </section>
     </main>

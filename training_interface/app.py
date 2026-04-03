@@ -24,8 +24,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
+from training_interface.blueprints import Blueprint, BlueprintStore
+from training_interface.git_sync import GitRemote, GitRemoteStore, GitSync
 from training_interface.knowledge_base import KnowledgeBase
 from training_interface.ollama_client import OllamaClient
+from training_interface.projects import ProjectGenerator, ProjectStore
 from training_interface.training_engine import (
     SessionStore,
     Task,
@@ -40,13 +43,25 @@ from training_interface.training_engine import (
 _BASE_DIR = Path(__file__).resolve().parent.parent
 _DATA_DIR = _BASE_DIR / "data"
 _DB_PATH = _DATA_DIR / "sessions" / "sessions.db"
+_PROJECTS_DB_PATH = _DATA_DIR / "projects" / "projects.db"
+_GIT_DB_PATH = _DATA_DIR / "git" / "remotes.db"
 _KB_DIR = _DATA_DIR / "knowledge_base"
 _EXPORTS_DIR = _DATA_DIR / "exports"
+_PROJECTS_DIR = _DATA_DIR / "projects" / "files"
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 _TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
 # Ensure directories exist
-for _d in (_DATA_DIR / "sessions", _KB_DIR, _EXPORTS_DIR, _STATIC_DIR, _TEMPLATES_DIR):
+for _d in (
+    _DATA_DIR / "sessions",
+    _DATA_DIR / "projects",
+    _DATA_DIR / "git",
+    _KB_DIR,
+    _EXPORTS_DIR,
+    _PROJECTS_DIR,
+    _STATIC_DIR,
+    _TEMPLATES_DIR,
+):
     _d.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
@@ -57,9 +72,14 @@ ollama = OllamaClient()
 store = SessionStore(_DB_PATH)
 kb = KnowledgeBase(_KB_DIR)
 engine = TrainingEngine(client=ollama, store=store)
+bp_store = BlueprintStore(_KB_DIR)
+proj_store = ProjectStore(_PROJECTS_DB_PATH)
+proj_gen = ProjectGenerator(ollama)
+git_store = GitRemoteStore(_GIT_DB_PATH)
 
-# Seed knowledge base on first run
+# Seed knowledge base and blueprints on first run
 kb.seed_if_empty()
+bp_store.seed_if_empty()
 
 # ---------------------------------------------------------------------------
 # FastAPI app
@@ -117,6 +137,53 @@ class ChatRequest(BaseModel):
     model: str
     message: str
     system_prompt: str = ""
+
+
+class CreateProjectRequest(BaseModel):
+    blueprint_id: str = Field(..., description="Blueprint to use")
+    name: str = Field(..., description="Project name")
+    model: str = Field(..., description="Ollama model name")
+    user_prompt: str = ""
+    temperature: float = Field(default=0.4, ge=0.0, le=2.0)
+
+
+class SaveBlueprintRequest(BaseModel):
+    id: str = ""
+    name: str = ""
+    category: str = ""
+    description: str = ""
+    language: str = ""
+    framework: str = ""
+    files: list[dict[str, Any]] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
+    build_commands: list[str] = Field(default_factory=list)
+    run_command: str = ""
+    system_prompt: str = ""
+    tags: list[str] = Field(default_factory=list)
+
+
+class SaveGitRemoteRequest(BaseModel):
+    name: str
+    provider: str = "github"
+    url_template: str = ""
+    owner: str = ""
+    token: str = ""
+
+
+class GitSyncRequest(BaseModel):
+    project_id: str
+    remote_id: str
+    repo_name: str = ""
+    branch: str = "main"
+    commit_message: str = "Update project"
+
+
+class UpdateFileRequest(BaseModel):
+    content: str
+
+
+class AdminUpdateKBItemRequest(BaseModel):
+    data: dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
@@ -444,6 +511,358 @@ async def import_kb_archive(file: UploadFile) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc))
     finally:
         Path(tmp_path).unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Blueprints
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/blueprints")
+async def list_blueprints(category: str | None = None) -> dict[str, Any]:
+    """List available project blueprints."""
+    items = bp_store.list_blueprints(category=category)
+    return {"blueprints": items, "count": len(items)}
+
+
+@app.get("/api/blueprints/categories")
+async def blueprint_categories() -> dict[str, Any]:
+    """List all blueprint categories."""
+    return {"categories": bp_store.get_categories()}
+
+
+@app.get("/api/blueprints/{bp_id}")
+async def get_blueprint(bp_id: str) -> dict[str, Any]:
+    """Get full blueprint details."""
+    bp = bp_store.get(bp_id)
+    if bp is None:
+        raise HTTPException(status_code=404, detail="Blueprint not found")
+    return bp.to_dict()
+
+
+@app.post("/api/blueprints")
+async def save_blueprint(req: SaveBlueprintRequest) -> dict[str, Any]:
+    """Create or update a blueprint."""
+    from training_interface.blueprints import BlueprintFile
+
+    bp = Blueprint(
+        id=req.id if req.id else "",
+        name=req.name,
+        category=req.category,
+        description=req.description,
+        language=req.language,
+        framework=req.framework,
+        files=[BlueprintFile.from_dict(f) for f in req.files],
+        dependencies=req.dependencies,
+        build_commands=req.build_commands,
+        run_command=req.run_command,
+        system_prompt=req.system_prompt,
+        tags=req.tags,
+    )
+    bp_id = bp_store.save(bp)
+    return {"id": bp_id, "message": "Blueprint saved"}
+
+
+@app.delete("/api/blueprints/{bp_id}")
+async def delete_blueprint(bp_id: str) -> dict[str, Any]:
+    """Delete a blueprint."""
+    ok = bp_store.delete(bp_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Blueprint not found")
+    return {"deleted": bp_id}
+
+
+# ---------------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/projects")
+async def list_projects(limit: int = 50, offset: int = 0) -> dict[str, Any]:
+    """List generated projects."""
+    projects = await proj_store.list_projects(limit=limit, offset=offset)
+    return {"projects": projects}
+
+
+@app.get("/api/projects/{project_id}")
+async def get_project(project_id: str) -> dict[str, Any]:
+    """Get full project details including all files."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project.to_dict()
+
+
+@app.post("/api/projects/generate")
+async def generate_project(req: CreateProjectRequest) -> dict[str, Any]:
+    """Generate a new project from a blueprint using an Ollama model."""
+    bp = bp_store.get(req.blueprint_id)
+    if bp is None:
+        raise HTTPException(status_code=404, detail="Blueprint not found")
+
+    # Run generation in background
+    bg = asyncio.create_task(
+        proj_gen.generate_project(
+            blueprint=bp,
+            model=req.model,
+            project_name=req.name,
+            store=proj_store,
+            user_prompt=req.user_prompt,
+            temperature=req.temperature,
+        )
+    )
+
+    def _cleanup(fut: asyncio.Future[Any]) -> None:
+        _running_sessions.pop(req.name, None)
+
+    _running_sessions[req.name] = bg
+    bg.add_done_callback(_cleanup)
+
+    return {
+        "message": "Project generation started",
+        "blueprint": bp.name,
+        "model": req.model,
+        "name": req.name,
+    }
+
+
+@app.post("/api/projects/{project_id}/regenerate/{file_path:path}")
+async def regenerate_file(
+    project_id: str, file_path: str, extra: str = ""
+) -> dict[str, Any]:
+    """Regenerate a single file within a project."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    result = await proj_gen.regenerate_file(
+        project=project,
+        file_path=file_path,
+        model=project.model_name,
+        store=proj_store,
+        extra_instructions=extra,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="File not found in project")
+    return {"path": result.path, "generated": result.generated}
+
+
+@app.put("/api/projects/{project_id}/files/{file_path:path}")
+async def update_project_file(
+    project_id: str, file_path: str, req: UpdateFileRequest
+) -> dict[str, Any]:
+    """Manually update a file's content in a project."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    for pf in project.files:
+        if pf.path == file_path:
+            pf.content = req.content
+            await proj_store.save(project)
+            return {"path": file_path, "updated": True}
+
+    raise HTTPException(status_code=404, detail="File not found in project")
+
+
+@app.post("/api/projects/{project_id}/export")
+async def export_project(project_id: str) -> dict[str, Any]:
+    """Export project files to disk."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    output = ProjectGenerator.export_to_disk(project, _PROJECTS_DIR)
+    return {"path": str(output), "file_count": project.file_count}
+
+
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: str) -> dict[str, Any]:
+    """Delete a project."""
+    ok = await proj_store.delete(project_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"deleted": project_id}
+
+
+# ---------------------------------------------------------------------------
+# Git sync
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/git/remotes")
+async def list_git_remotes() -> dict[str, Any]:
+    """List saved Git remote configurations."""
+    remotes = await git_store.list_remotes()
+    return {"remotes": remotes}
+
+
+@app.post("/api/git/remotes")
+async def save_git_remote(req: SaveGitRemoteRequest) -> dict[str, Any]:
+    """Save a new Git remote configuration."""
+    remote = GitRemote(
+        name=req.name,
+        provider=req.provider,
+        url_template=req.url_template,
+        owner=req.owner,
+        token=req.token,
+    )
+    await git_store.save(remote)
+    return {"id": remote.id, "message": "Remote saved"}
+
+
+@app.delete("/api/git/remotes/{remote_id}")
+async def delete_git_remote(remote_id: str) -> dict[str, Any]:
+    """Delete a Git remote configuration."""
+    ok = await git_store.delete(remote_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Remote not found")
+    return {"deleted": remote_id}
+
+
+@app.post("/api/git/sync")
+async def sync_project_to_git(req: GitSyncRequest) -> dict[str, Any]:
+    """Sync a project to a Git remote (export, init, commit, push)."""
+    project = await proj_store.load(req.project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    remote = await git_store.load(req.remote_id)
+    if remote is None:
+        raise HTTPException(status_code=404, detail="Remote not found")
+
+    # Export project to disk
+    repo_name = req.repo_name or project.name.replace(" ", "-").lower()
+    project_dir = ProjectGenerator.export_to_disk(project, _PROJECTS_DIR)
+
+    # Build remote URL
+    remote_url = remote.repo_url(repo_name)
+
+    # Full sync: init, commit, push
+    result = await GitSync.full_sync(
+        project_dir=project_dir,
+        remote_url=remote_url,
+        branch=req.branch,
+        commit_message=req.commit_message,
+    )
+
+    # Update project with git info
+    if result.success:
+        # Store the safe URL (without token) in the project
+        safe_url = remote_url
+        if remote.token and safe_url.startswith("https://"):
+            safe_url = safe_url.replace(f"{remote.token}@", "", 1)
+        project.git_remote = safe_url
+        project.git_branch = req.branch
+        await proj_store.save(project)
+
+    return result.to_dict()
+
+
+@app.get("/api/git/status/{project_id}")
+async def git_project_status(project_id: str) -> dict[str, Any]:
+    """Get git status for a project's exported directory."""
+    project = await proj_store.load(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    project_dir = _PROJECTS_DIR / project.name.replace(" ", "-").lower()
+    if not project_dir.exists():
+        return {"initialized": False, "message": "Project not exported yet"}
+
+    return await GitSync.status(project_dir)
+
+
+# ---------------------------------------------------------------------------
+# Admin panel — CRUD for all entities
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/admin/overview")
+async def admin_overview() -> dict[str, Any]:
+    """Admin overview: counts of all entities."""
+    sessions = await store.list_sessions(limit=10000)
+    projects = await proj_store.list_projects(limit=10000)
+    remotes = await git_store.list_remotes()
+    return {
+        "sessions": len(sessions),
+        "projects": len(projects),
+        "blueprints": len(bp_store.list_blueprints()),
+        "kb_items": kb.stats()["total_items"],
+        "git_remotes": len(remotes),
+    }
+
+
+@app.put("/api/admin/kb/{item_id}")
+async def admin_update_kb_item(
+    item_id: str, req: AdminUpdateKBItemRequest
+) -> dict[str, Any]:
+    """Update any knowledge base item (task, pattern, prompt) by ID."""
+    existing = kb.get_item(item_id)
+    if existing is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Determine the kind and directory
+    manifest = kb._load_manifest()
+    for entry in manifest.entries:
+        if entry.id == item_id:
+            dir_map = {
+                "task": kb._tasks_dir,
+                "pattern": kb._patterns_dir,
+                "prompt": kb._prompts_dir,
+            }
+            target_dir = dir_map.get(entry.kind)
+            if target_dir:
+                path = target_dir / f"{item_id}.json"
+                # Merge: keep id, update the rest
+                updated = {**req.data, "id": item_id}
+                kb._write_json(path, updated)
+
+                # Update manifest entry name/tags if provided
+                if "title" in req.data:
+                    entry.name = req.data["title"]
+                elif "name" in req.data:
+                    entry.name = req.data["name"]
+                if "tags" in req.data:
+                    entry.tags = req.data["tags"]
+                kb._save_manifest(manifest)
+
+                return {"id": item_id, "message": "Item updated"}
+
+    raise HTTPException(status_code=404, detail="Item kind not found")
+
+
+@app.put("/api/admin/blueprints/{bp_id}")
+async def admin_update_blueprint(
+    bp_id: str, req: SaveBlueprintRequest
+) -> dict[str, Any]:
+    """Update a blueprint via admin panel."""
+    existing = bp_store.get(bp_id)
+    if existing is None:
+        raise HTTPException(status_code=404, detail="Blueprint not found")
+
+    from training_interface.blueprints import BlueprintFile
+
+    existing.name = req.name or existing.name
+    existing.category = req.category or existing.category
+    existing.description = req.description or existing.description
+    existing.language = req.language or existing.language
+    existing.framework = req.framework or existing.framework
+    if req.files:
+        existing.files = [BlueprintFile.from_dict(f) for f in req.files]
+    if req.dependencies:
+        existing.dependencies = req.dependencies
+    if req.build_commands:
+        existing.build_commands = req.build_commands
+    if req.run_command:
+        existing.run_command = req.run_command
+    if req.system_prompt:
+        existing.system_prompt = req.system_prompt
+    if req.tags:
+        existing.tags = req.tags
+
+    bp_store.save(existing)
+    return {"id": bp_id, "message": "Blueprint updated"}
 
 
 # ---------------------------------------------------------------------------

@@ -54,9 +54,11 @@
             // Refresh data when switching tabs
             if (target === "models") loadModels();
             if (target === "training") { loadSessions(); loadModelsForSelects(); loadTasksForSelect(); }
+            if (target === "projects") { loadProjects(); loadModelsForSelects(); loadBlueprintsForSelect(); }
             if (target === "knowledge") loadKB();
             if (target === "chat") loadModelsForSelects();
             if (target === "dashboard") loadDashboard();
+            if (target === "admin") loadAdmin();
         });
     });
 
@@ -136,7 +138,7 @@
             const data = await api("/api/models");
             const options = data.models.map((m) => `<option value="${m.name}">${m.name} (${formatBytes(m.size)})</option>`).join("");
             const empty = '<option value="">Select model...</option>';
-            ["#session-model-kb", "#session-model-custom", "#chat-model"].forEach((sel) => {
+            ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model"].forEach((sel) => {
                 const el = $(sel);
                 if (el) el.innerHTML = empty + options;
             });
@@ -531,6 +533,441 @@
             e.preventDefault();
             sendChat();
         }
+    });
+
+    // ── Projects ────────────────────────────────────────────────────────
+    let _currentProjectId = null;
+
+    async function loadBlueprintsForSelect() {
+        try {
+            const data = await api("/api/blueprints");
+            const sel = $("#project-blueprint");
+            if (sel) {
+                sel.innerHTML = '<option value="">Select blueprint...</option>' +
+                    data.blueprints.map((b) => `<option value="${b.id}">${b.name} (${b.language}/${b.framework})</option>`).join("");
+            }
+        } catch (_) { /* ignore */ }
+    }
+
+    async function loadProjects() {
+        const container = $("#projects-list");
+        try {
+            const data = await api("/api/projects?limit=50");
+            if (!data.projects.length) {
+                container.innerHTML = '<p class="muted">No projects yet. Generate one from a blueprint!</p>';
+                return;
+            }
+            container.innerHTML = data.projects.map((p) => `
+                <div class="list-item" onclick="window._viewProject('${p.id}')">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${p.name || "Untitled"}</div>
+                        <div class="list-item-sub">${p.blueprint_name || ""} · ${p.model_name || ""} · ${formatTime(p.created_at)}${p.git_remote ? ' · Git: ' + p.git_remote : ''}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <span class="badge ${badgeClass(p.status)}">${p.status}</span>
+                        <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); window._deleteProject('${p.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+    }
+
+    $("#btn-new-project").addEventListener("click", () => {
+        const form = $("#new-project-form");
+        form.classList.toggle("hidden");
+        if (!form.classList.contains("hidden")) {
+            loadModelsForSelects();
+            loadBlueprintsForSelect();
+        }
+    });
+
+    $("#btn-cancel-project").addEventListener("click", () => {
+        $("#new-project-form").classList.add("hidden");
+    });
+
+    // Blueprint preview
+    $("#project-blueprint").addEventListener("change", async () => {
+        const bpId = $("#project-blueprint").value;
+        const preview = $("#blueprint-preview");
+        if (!bpId) { preview.textContent = ""; return; }
+        try {
+            const bp = await api(`/api/blueprints/${bpId}`);
+            preview.textContent = `${bp.description} — ${bp.files.length} files, ${bp.language}/${bp.framework}`;
+        } catch (_) { preview.textContent = ""; }
+    });
+
+    $("#btn-generate-project").addEventListener("click", async () => {
+        const bpId = $("#project-blueprint").value;
+        const name = $("#project-name").value.trim();
+        const model = $("#project-model").value;
+        if (!bpId || !name || !model) return alert("Select blueprint, enter name, and select model");
+
+        try {
+            await api("/api/projects/generate", {
+                method: "POST",
+                body: JSON.stringify({
+                    blueprint_id: bpId,
+                    name: name,
+                    model: model,
+                    user_prompt: $("#project-prompt").value.trim(),
+                }),
+            });
+            $("#new-project-form").classList.add("hidden");
+            alert("Project generation started! Refresh in a few moments.");
+            setTimeout(loadProjects, 2000);
+            setTimeout(loadProjects, 10000);
+            setTimeout(loadProjects, 30000);
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    window._viewProject = async function (id) {
+        try {
+            const p = await api(`/api/projects/${id}`);
+            _currentProjectId = id;
+            const panel = $("#project-detail");
+            panel.classList.remove("hidden");
+            $("#project-detail-title").textContent = p.name;
+
+            let html = `
+                <div style="margin-bottom:12px">
+                    <span class="badge ${badgeClass(p.status)}">${p.status}</span>
+                    <span style="margin-left:12px">${p.blueprint_name} · ${p.language}/${p.framework} · ${p.model_name}</span>
+                    ${p.git_remote ? `<span style="margin-left:12px">Git: ${p.git_remote}</span>` : ''}
+                </div>
+            `;
+
+            for (const f of p.files) {
+                html += `
+                    <div class="attempt-card">
+                        <div class="attempt-header">
+                            <span><strong>${f.path}</strong> ${f.generated ? '<span class="badge badge-pass">generated</span>' : '<span class="badge badge-pending">static</span>'}</span>
+                            <span>${f.description}</span>
+                        </div>
+                        <div class="attempt-response">${escapeHtml(f.content || "(empty)")}</div>
+                    </div>
+                `;
+            }
+
+            $("#project-detail-body").innerHTML = html;
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    $("#btn-close-project").addEventListener("click", () => {
+        $("#project-detail").classList.add("hidden");
+        _currentProjectId = null;
+    });
+
+    $("#btn-export-project").addEventListener("click", async () => {
+        if (!_currentProjectId) return;
+        try {
+            const data = await api(`/api/projects/${_currentProjectId}/export`, { method: "POST" });
+            alert(`Exported ${data.file_count} files to: ${data.path}`);
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    $("#btn-sync-project").addEventListener("click", async () => {
+        if (!_currentProjectId) return;
+        try {
+            const remotes = await api("/api/git/remotes");
+            if (!remotes.remotes.length) {
+                alert("No Git remotes configured. Add one in the Admin panel first.");
+                return;
+            }
+            const remoteId = remotes.remotes[0].id;
+            const repoName = prompt("Repository name:", "my-project");
+            if (!repoName) return;
+
+            const result = await api("/api/git/sync", {
+                method: "POST",
+                body: JSON.stringify({
+                    project_id: _currentProjectId,
+                    remote_id: remoteId,
+                    repo_name: repoName,
+                }),
+            });
+            if (result.success) {
+                alert("Pushed to Git successfully!");
+            } else {
+                alert("Git sync failed: " + result.message);
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    window._deleteProject = async function (id) {
+        if (!confirm("Delete this project?")) return;
+        try {
+            await api(`/api/projects/${id}`, { method: "DELETE" });
+            loadProjects();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // ── Admin Panel ────────────────────────────────────────────────────
+    async function loadAdmin() {
+        // Stats
+        try {
+            const data = await api("/api/admin/overview");
+            $("#admin-sessions").textContent = data.sessions;
+            $("#admin-projects").textContent = data.projects;
+            $("#admin-blueprints").textContent = data.blueprints;
+            $("#admin-kb").textContent = data.kb_items;
+            $("#admin-remotes").textContent = data.git_remotes;
+        } catch (_) { /* ignore */ }
+
+        loadAdminRemotes();
+        loadAdminBlueprints();
+        loadAdminKB();
+    }
+
+    // Git remotes
+    async function loadAdminRemotes() {
+        const container = $("#remotes-list");
+        try {
+            const data = await api("/api/git/remotes");
+            if (!data.remotes.length) {
+                container.innerHTML = '<p class="muted">No Git remotes configured.</p>';
+                return;
+            }
+            container.innerHTML = data.remotes.map((r) => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${r.name} <span class="tag">${r.provider}</span></div>
+                        <div class="list-item-sub">${r.owner} · Token: ${r.token}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-small btn-danger" onclick="window._deleteRemote('${r.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+    }
+
+    $("#btn-add-remote").addEventListener("click", () => {
+        $("#add-remote-form").classList.toggle("hidden");
+    });
+
+    $("#btn-cancel-remote").addEventListener("click", () => {
+        $("#add-remote-form").classList.add("hidden");
+    });
+
+    $("#btn-save-remote").addEventListener("click", async () => {
+        const name = $("#remote-name").value.trim();
+        const owner = $("#remote-owner").value.trim();
+        if (!name || !owner) return alert("Name and owner are required");
+
+        try {
+            await api("/api/git/remotes", {
+                method: "POST",
+                body: JSON.stringify({
+                    name: name,
+                    provider: $("#remote-provider").value,
+                    owner: owner,
+                    token: $("#remote-token").value.trim(),
+                    url_template: $("#remote-url-template").value.trim(),
+                }),
+            });
+            $("#add-remote-form").classList.add("hidden");
+            loadAdminRemotes();
+            loadAdmin();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    window._deleteRemote = async function (id) {
+        if (!confirm("Delete this remote?")) return;
+        try {
+            await api(`/api/git/remotes/${id}`, { method: "DELETE" });
+            loadAdminRemotes();
+            loadAdmin();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // Admin blueprints
+    async function loadAdminBlueprints() {
+        const container = $("#admin-blueprints-list");
+        try {
+            const data = await api("/api/blueprints");
+            if (!data.blueprints.length) {
+                container.innerHTML = '<p class="muted">No blueprints.</p>';
+                return;
+            }
+            container.innerHTML = data.blueprints.map((b) => `
+                <div class="list-item" onclick="window._editBlueprint('${b.id}')">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${b.name} <span class="tag">${b.category}</span></div>
+                        <div class="list-item-sub">${b.language}/${b.framework} · ${b.file_count} files · ${b.tags.map((t) => '<span class="tag">' + t + '</span>').join(" ")}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-small">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); window._deleteBlueprint('${b.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+    }
+
+    window._editBlueprint = async function (id) {
+        try {
+            const bp = await api(`/api/blueprints/${id}`);
+            const modal = $("#edit-modal");
+            modal.classList.remove("hidden");
+            $("#edit-modal-title").textContent = `Edit Blueprint: ${bp.name}`;
+            modal.dataset.editType = "blueprint";
+            modal.dataset.editId = id;
+
+            $("#edit-modal-body").innerHTML = `
+                <label>Name:</label><input type="text" id="edit-bp-name" class="input-wide" value="${escapeHtml(bp.name)}">
+                <label>Category:</label><input type="text" id="edit-bp-category" class="input-wide" value="${escapeHtml(bp.category)}">
+                <label>Description:</label><textarea id="edit-bp-desc" rows="2" class="input-wide">${escapeHtml(bp.description)}</textarea>
+                <label>Language:</label><input type="text" id="edit-bp-lang" class="input-wide" value="${escapeHtml(bp.language)}">
+                <label>Framework:</label><input type="text" id="edit-bp-fw" class="input-wide" value="${escapeHtml(bp.framework)}">
+                <label>System Prompt:</label><textarea id="edit-bp-prompt" rows="4" class="input-wide">${escapeHtml(bp.system_prompt)}</textarea>
+                <label>Tags (comma-separated):</label><input type="text" id="edit-bp-tags" class="input-wide" value="${bp.tags.join(", ")}">
+                <label>Dependencies (comma-separated):</label><input type="text" id="edit-bp-deps" class="input-wide" value="${bp.dependencies.join(", ")}">
+                <label>Run Command:</label><input type="text" id="edit-bp-run" class="input-wide" value="${escapeHtml(bp.run_command)}">
+            `;
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    window._deleteBlueprint = async function (id) {
+        if (!confirm("Delete this blueprint?")) return;
+        try {
+            await api(`/api/blueprints/${id}`, { method: "DELETE" });
+            loadAdminBlueprints();
+            loadAdmin();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // Admin KB items
+    async function loadAdminKB() {
+        const container = $("#admin-kb-list");
+        try {
+            const data = await api("/api/kb");
+            if (!data.items.length) {
+                container.innerHTML = '<p class="muted">No KB items.</p>';
+                return;
+            }
+            container.innerHTML = data.items.map((item) => `
+                <div class="list-item" onclick="window._editKBItem('${item.id}')">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${item.name} <span class="tag">${item.kind}</span></div>
+                        <div class="list-item-sub">${item.tags.map((t) => '<span class="tag">' + t + '</span>').join(" ")}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-small">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); window._deleteKBItem('${item.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+    }
+
+    window._editKBItem = async function (id) {
+        try {
+            const item = await api(`/api/kb/${id}`);
+            const modal = $("#edit-modal");
+            modal.classList.remove("hidden");
+            $("#edit-modal-title").textContent = `Edit: ${item.title || item.name || id}`;
+            modal.dataset.editType = "kb";
+            modal.dataset.editId = id;
+
+            // Build editable fields from the item's keys
+            let fields = "";
+            for (const [key, val] of Object.entries(item)) {
+                if (key === "id") continue;
+                if (Array.isArray(val)) {
+                    fields += `<label>${key}:</label><input type="text" class="input-wide edit-field" data-key="${key}" value="${val.join(", ")}">`;
+                } else if (typeof val === "string" && val.length > 100) {
+                    fields += `<label>${key}:</label><textarea rows="4" class="input-wide edit-field" data-key="${key}">${escapeHtml(val)}</textarea>`;
+                } else {
+                    fields += `<label>${key}:</label><input type="text" class="input-wide edit-field" data-key="${key}" value="${escapeHtml(String(val))}">`;
+                }
+            }
+            $("#edit-modal-body").innerHTML = fields;
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // Save edit modal
+    $("#btn-save-edit").addEventListener("click", async () => {
+        const modal = $("#edit-modal");
+        const editType = modal.dataset.editType;
+        const editId = modal.dataset.editId;
+
+        try {
+            if (editType === "blueprint") {
+                const tags = $("#edit-bp-tags").value.split(",").map((t) => t.trim()).filter(Boolean);
+                const deps = $("#edit-bp-deps").value.split(",").map((t) => t.trim()).filter(Boolean);
+                await api(`/api/admin/blueprints/${editId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        name: $("#edit-bp-name").value.trim(),
+                        category: $("#edit-bp-category").value.trim(),
+                        description: $("#edit-bp-desc").value.trim(),
+                        language: $("#edit-bp-lang").value.trim(),
+                        framework: $("#edit-bp-fw").value.trim(),
+                        system_prompt: $("#edit-bp-prompt").value.trim(),
+                        tags: tags,
+                        dependencies: deps,
+                        run_command: $("#edit-bp-run").value.trim(),
+                    }),
+                });
+                loadAdminBlueprints();
+            } else if (editType === "kb") {
+                const data = {};
+                $$("#edit-modal-body .edit-field").forEach((el) => {
+                    const key = el.dataset.key;
+                    let val = el.value;
+                    // Try to parse arrays
+                    if (val.includes(",") && !val.includes("\n")) {
+                        const arr = val.split(",").map((s) => s.trim()).filter(Boolean);
+                        if (arr.length > 1 || (arr.length === 1 && val.includes(","))) {
+                            data[key] = arr;
+                            return;
+                        }
+                    }
+                    data[key] = val;
+                });
+                await api(`/api/admin/kb/${editId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ data }),
+                });
+                loadAdminKB();
+            }
+            modal.classList.add("hidden");
+            alert("Saved!");
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    $("#btn-close-edit").addEventListener("click", () => {
+        $("#edit-modal").classList.add("hidden");
     });
 
     // ── Init ────────────────────────────────────────────────────────────
