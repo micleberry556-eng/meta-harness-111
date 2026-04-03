@@ -818,6 +818,7 @@
         anthropic: { name: "Anthropic (Claude)", base_url: "https://api.anthropic.com/v1", default_model: "claude-sonnet-4-20250514" },
         google: { name: "Google (Gemini)", base_url: "https://generativelanguage.googleapis.com/v1beta/openai", default_model: "gemini-2.0-flash" },
         deepseek: { name: "DeepSeek", base_url: "https://api.deepseek.com", default_model: "deepseek-chat" },
+        meta_llama: { name: "Meta Llama (official API)", base_url: "https://api.llama.com/v1", default_model: "Llama-4-Maverick-17B-128E-Instruct-FP8" },
         custom: { name: "", base_url: "", default_model: "" },
     };
 
