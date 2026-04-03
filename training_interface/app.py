@@ -29,6 +29,13 @@ from training_interface.git_sync import GitRemote, GitRemoteStore, GitSync
 from training_interface.knowledge_base import KnowledgeBase
 from training_interface.ollama_client import OllamaClient
 from training_interface.projects import ProjectGenerator, ProjectStore
+from training_interface.providers import (
+    PROVIDER_PRESETS,
+    APIProvider,
+    ExternalAPIClient,
+    ProviderStore,
+    UnifiedClient,
+)
 from training_interface.training_engine import (
     SessionStore,
     Task,
@@ -45,6 +52,7 @@ _DATA_DIR = _BASE_DIR / "data"
 _DB_PATH = _DATA_DIR / "sessions" / "sessions.db"
 _PROJECTS_DB_PATH = _DATA_DIR / "projects" / "projects.db"
 _GIT_DB_PATH = _DATA_DIR / "git" / "remotes.db"
+_PROVIDERS_DB_PATH = _DATA_DIR / "providers" / "providers.db"
 _KB_DIR = _DATA_DIR / "knowledge_base"
 _EXPORTS_DIR = _DATA_DIR / "exports"
 _PROJECTS_DIR = _DATA_DIR / "projects" / "files"
@@ -56,6 +64,7 @@ for _d in (
     _DATA_DIR / "sessions",
     _DATA_DIR / "projects",
     _DATA_DIR / "git",
+    _DATA_DIR / "providers",
     _KB_DIR,
     _EXPORTS_DIR,
     _PROJECTS_DIR,
@@ -76,6 +85,8 @@ bp_store = BlueprintStore(_KB_DIR)
 proj_store = ProjectStore(_PROJECTS_DB_PATH)
 proj_gen = ProjectGenerator(ollama)
 git_store = GitRemoteStore(_GIT_DB_PATH)
+provider_store = ProviderStore(_PROVIDERS_DB_PATH)
+unified = UnifiedClient(ollama, provider_store)
 
 # Seed knowledge base and blueprints on first run
 kb.seed_if_empty()
@@ -184,6 +195,17 @@ class UpdateFileRequest(BaseModel):
 
 class AdminUpdateKBItemRequest(BaseModel):
     data: dict[str, Any]
+
+
+class SaveProviderRequest(BaseModel):
+    provider_type: str = Field(
+        ..., description="xai, openai, anthropic, google, custom"
+    )
+    name: str = ""
+    base_url: str = ""
+    api_key: str = Field(..., description="API key for the provider")
+    default_model: str = ""
+    models: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -408,7 +430,13 @@ async def export_sessions() -> dict[str, Any]:
 
 @app.post("/api/chat")
 async def quick_chat(req: ChatRequest) -> dict[str, Any]:
-    """Send a single message to a model and get a response."""
+    """Send a single message to a model and get a response.
+
+    The model field can be:
+    - A plain Ollama model name: "codellama:latest"
+    - A prefixed external model: "xai:grok-3-latest", "openai:gpt-4o"
+    - A provider-ID prefixed model: "<provider_id>:<model_name>"
+    """
     from training_interface.ollama_client import ChatMessage
 
     messages = []
@@ -417,7 +445,7 @@ async def quick_chat(req: ChatRequest) -> dict[str, Any]:
     messages.append(ChatMessage(role="user", content=req.message))
 
     try:
-        result = await ollama.chat(model=req.model, messages=messages)
+        result = await unified.chat(model_ref=req.model, messages=messages)
         return {
             "response": result.content,
             "model": result.model,
@@ -863,6 +891,68 @@ async def admin_update_blueprint(
 
     bp_store.save(existing)
     return {"id": bp_id, "message": "Blueprint updated"}
+
+
+# ---------------------------------------------------------------------------
+# API Providers (Z.ai, OpenAI, Anthropic, Google, custom)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/providers/presets")
+async def get_provider_presets() -> dict[str, Any]:
+    """Return available provider presets (xai, openai, etc.)."""
+    return {"presets": PROVIDER_PRESETS}
+
+
+@app.get("/api/providers")
+async def list_providers() -> dict[str, Any]:
+    """List configured API providers (keys masked)."""
+    providers = await provider_store.list_providers()
+    return {"providers": [p.to_safe_dict() for p in providers]}
+
+
+@app.post("/api/providers")
+async def save_provider(req: SaveProviderRequest) -> dict[str, Any]:
+    """Add a new API provider."""
+    preset = PROVIDER_PRESETS.get(req.provider_type, {})
+    provider = APIProvider(
+        provider_type=req.provider_type,
+        name=req.name or preset.get("name", req.provider_type),
+        base_url=req.base_url or preset.get("base_url", ""),
+        api_key=req.api_key,
+        default_model=req.default_model or preset.get("default_model", ""),
+        models=req.models,
+    )
+    await provider_store.save(provider)
+    return {"id": provider.id, "message": "Provider saved"}
+
+
+@app.delete("/api/providers/{provider_id}")
+async def delete_provider(provider_id: str) -> dict[str, Any]:
+    """Delete an API provider."""
+    ok = await provider_store.delete(provider_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    return {"deleted": provider_id}
+
+
+@app.post("/api/providers/{provider_id}/test")
+async def test_provider(provider_id: str) -> dict[str, Any]:
+    """Test connection to an API provider."""
+    provider = await provider_store.load(provider_id)
+    if provider is None:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
+    client = ExternalAPIClient(provider)
+    ok, message = await client.test_connection()
+    return {"success": ok, "message": message}
+
+
+@app.get("/api/models/all")
+async def list_all_models() -> dict[str, Any]:
+    """List all models from all sources (Ollama + external providers)."""
+    models = await unified.list_all_models()
+    return {"models": models}
 
 
 # ---------------------------------------------------------------------------

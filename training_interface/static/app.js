@@ -135,14 +135,26 @@
 
     async function loadModelsForSelects() {
         try {
-            const data = await api("/api/models");
-            const options = data.models.map((m) => `<option value="${m.name}">${m.name} (${formatBytes(m.size)})</option>`).join("");
+            // Load all models: local Ollama + external providers
+            const data = await api("/api/models/all");
+            const options = data.models.map((m) => `<option value="${m.ref}">${m.name} (${m.provider_name}${m.size_gb ? ', ' + m.size_gb + ' GB' : ''})</option>`).join("");
             const empty = '<option value="">Select model...</option>';
             ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model"].forEach((sel) => {
                 const el = $(sel);
                 if (el) el.innerHTML = empty + options;
             });
-        } catch (_) { /* ignore */ }
+        } catch (_) {
+            // Fallback to Ollama-only
+            try {
+                const data = await api("/api/models");
+                const options = data.models.map((m) => `<option value="${m.name}">${m.name} (${formatBytes(m.size)})</option>`).join("");
+                const empty = '<option value="">Select model...</option>';
+                ["#session-model-kb", "#session-model-custom", "#chat-model", "#project-model"].forEach((sel) => {
+                    const el = $(sel);
+                    if (el) el.innerHTML = empty + options;
+                });
+            } catch (_2) { /* ignore */ }
+        }
     }
 
     window._deleteModel = async function (name) {
@@ -726,6 +738,7 @@
         } catch (_) { /* ignore */ }
 
         loadAdminRemotes();
+        loadAdminProviders();
         loadAdminBlueprints();
         loadAdminKB();
     }
@@ -792,6 +805,111 @@
         try {
             await api(`/api/git/remotes/${id}`, { method: "DELETE" });
             loadAdminRemotes();
+            loadAdmin();
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // API Providers
+    const _providerPresets = {
+        xai: { name: "Z.ai / Grok (xAI)", base_url: "https://api.x.ai/v1", default_model: "grok-3-latest" },
+        openai: { name: "OpenAI", base_url: "https://api.openai.com/v1", default_model: "gpt-4o" },
+        anthropic: { name: "Anthropic (Claude)", base_url: "https://api.anthropic.com/v1", default_model: "claude-sonnet-4-20250514" },
+        google: { name: "Google (Gemini)", base_url: "https://generativelanguage.googleapis.com/v1beta/openai", default_model: "gemini-2.0-flash" },
+        custom: { name: "", base_url: "", default_model: "" },
+    };
+
+    async function loadAdminProviders() {
+        const container = $("#providers-list");
+        try {
+            const data = await api("/api/providers");
+            if (!data.providers.length) {
+                container.innerHTML = '<p class="muted">No API providers configured. Add one to use online models.</p>';
+                return;
+            }
+            container.innerHTML = data.providers.map((p) => `
+                <div class="list-item">
+                    <div class="list-item-main">
+                        <div class="list-item-title">${p.name} <span class="tag">${p.provider_type}</span> ${p.enabled ? '<span class="badge badge-pass">active</span>' : '<span class="badge badge-fail">disabled</span>'}</div>
+                        <div class="list-item-sub">Model: ${p.default_model} · Key: ${p.api_key}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-small" onclick="window._testProvider('${p.id}')">Test</button>
+                        <button class="btn btn-small btn-danger" onclick="window._deleteProvider('${p.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+        } catch (e) {
+            container.innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+    }
+
+    $("#btn-add-provider").addEventListener("click", () => {
+        $("#add-provider-form").classList.toggle("hidden");
+        // Auto-fill from preset
+        const type = $("#provider-type").value;
+        const preset = _providerPresets[type] || {};
+        $("#provider-base-url").value = preset.base_url || "";
+        $("#provider-default-model").value = preset.default_model || "";
+    });
+
+    $("#btn-cancel-provider").addEventListener("click", () => {
+        $("#add-provider-form").classList.add("hidden");
+    });
+
+    // Auto-fill when provider type changes
+    $("#provider-type").addEventListener("change", () => {
+        const type = $("#provider-type").value;
+        const preset = _providerPresets[type] || {};
+        $("#provider-base-url").value = preset.base_url || "";
+        $("#provider-default-model").value = preset.default_model || "";
+        if (!$("#provider-name").value.trim()) {
+            $("#provider-name").value = preset.name || "";
+        }
+    });
+
+    $("#btn-save-provider").addEventListener("click", async () => {
+        const apiKey = $("#provider-api-key").value.trim();
+        if (!apiKey) return alert("API key is required");
+
+        const models = $("#provider-models").value.trim().split(",").map((s) => s.trim()).filter(Boolean);
+
+        try {
+            await api("/api/providers", {
+                method: "POST",
+                body: JSON.stringify({
+                    provider_type: $("#provider-type").value,
+                    name: $("#provider-name").value.trim(),
+                    base_url: $("#provider-base-url").value.trim(),
+                    api_key: apiKey,
+                    default_model: $("#provider-default-model").value.trim(),
+                    models: models,
+                }),
+            });
+            $("#add-provider-form").classList.add("hidden");
+            loadAdminProviders();
+            loadAdmin();
+            alert("Provider saved! Its models will now appear in all model selectors.");
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    });
+
+    window._testProvider = async function (id) {
+        try {
+            const result = await api(`/api/providers/${id}/test`, { method: "POST" });
+            alert(result.success ? "Connection OK: " + result.message : "Failed: " + result.message);
+        } catch (e) {
+            alert("Test failed: " + e.message);
+        }
+    };
+
+    window._deleteProvider = async function (id) {
+        if (!confirm("Delete this provider?")) return;
+        try {
+            await api(`/api/providers/${id}`, { method: "DELETE" });
+            loadAdminProviders();
             loadAdmin();
         } catch (e) {
             alert("Error: " + e.message);

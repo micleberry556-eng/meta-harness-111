@@ -323,6 +323,41 @@
                 </div>
             </div>
 
+            <!-- API Providers -->
+            <div class="section">
+                <div class="toolbar">
+                    <h3>API Providers (Z.ai, OpenAI, Anthropic, Google)</h3>
+                    <button id="btn-add-provider" class="btn btn-primary">Add Provider</button>
+                </div>
+                <div id="add-provider-form" class="form-panel hidden">
+                    <label>Provider Type:</label>
+                    <select id="provider-type">
+                        <option value="xai">Z.ai / Grok (xAI)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="google">Google (Gemini)</option>
+                        <option value="custom">Custom OpenAI-compatible</option>
+                    </select>
+                    <label>Name (optional):</label>
+                    <input type="text" id="provider-name" class="input-wide" placeholder="Auto-filled from type">
+                    <label>API Key:</label>
+                    <input type="text" id="provider-api-key" class="input-wide" placeholder="xai-..., sk-..., etc.">
+                    <label>Base URL (auto-filled, edit for custom):</label>
+                    <input type="text" id="provider-base-url" class="input-wide" placeholder="https://api.x.ai/v1">
+                    <label>Default Model:</label>
+                    <input type="text" id="provider-default-model" class="input-wide" placeholder="grok-3-latest">
+                    <label>Additional Models (comma-separated, optional):</label>
+                    <input type="text" id="provider-models" class="input-wide" placeholder="grok-3-latest, grok-2-latest">
+                    <div class="form-actions">
+                        <button id="btn-save-provider" class="btn btn-primary">Save</button>
+                        <button id="btn-cancel-provider" class="btn">Cancel</button>
+                    </div>
+                </div>
+                <div id="providers-list" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+
             <!-- Blueprints management -->
             <div class="section">
                 <h3>Blueprints</h3>
