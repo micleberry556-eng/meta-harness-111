@@ -194,7 +194,7 @@ class AdminUpdateKBItemRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     """Serve the main dashboard page."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 # ---------------------------------------------------------------------------
