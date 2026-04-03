@@ -1,0 +1,10 @@
+{
+  "name": "gentle_corrector",
+  "description": "Correction prompt that explains errors constructively",
+  "content": "Your previous attempt had some issues. I'll explain each one so you can learn from them and produce a better response. Focus on understanding WHY each issue matters, not just fixing it.",
+  "tags": [
+    "correction",
+    "teaching"
+  ],
+  "id": "a52215c8d20d"
+}

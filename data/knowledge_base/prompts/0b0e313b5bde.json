@@ -1,0 +1,10 @@
+{
+  "name": "step_by_step",
+  "description": "Prompt that encourages step-by-step reasoning",
+  "content": "Think through this problem step by step before writing any code. First, identify the inputs and outputs. Then, consider edge cases. Finally, choose an algorithm and implement it. Show your reasoning.",
+  "tags": [
+    "reasoning",
+    "methodology"
+  ],
+  "id": "0b0e313b5bde"
+}

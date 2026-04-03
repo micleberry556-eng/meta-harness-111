@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta-Harness — Training Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Meta-Harness <span class="subtitle">Training Interface</span></h1>
+            <div id="status-indicator" class="status-dot offline" title="Ollama: checking..."></div>
+        </div>
+        <nav>
+            <button class="tab active" data-tab="dashboard">Dashboard</button>
+            <button class="tab" data-tab="models">Models</button>
+            <button class="tab" data-tab="training">Training</button>
+            <button class="tab" data-tab="knowledge">Knowledge Base</button>
+            <button class="tab" data-tab="chat">Chat</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ==================== DASHBOARD ==================== -->
+        <section id="tab-dashboard" class="tab-content active">
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icon">🤖</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-models">—</div>
+                        <div class="card-label">Models</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-sessions">—</div>
+                        <div class="card-label">Sessions</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-completed">—</div>
+                        <div class="card-label">Completed</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📚</div>
+                    <div class="card-body">
+                        <div class="card-value" id="stat-kb">—</div>
+                        <div class="card-label">KB Items</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>Recent Sessions</h2>
+                <div id="recent-sessions" class="list-container">
+                    <p class="muted">Loading...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MODELS ==================== -->
+        <section id="tab-models" class="tab-content">
+            <div class="toolbar">
+                <h2>Ollama Models</h2>
+                <div class="toolbar-actions">
+                    <input type="text" id="pull-model-name" placeholder="e.g. llama3.2, codellama, mistral" class="input-wide">
+                    <button id="btn-pull-model" class="btn btn-primary">Pull Model</button>
+                    <button id="btn-refresh-models" class="btn">Refresh</button>
+                </div>
+            </div>
+            <div id="pull-progress" class="progress-container hidden">
+                <div class="progress-bar"><div class="progress-fill" id="pull-fill"></div></div>
+                <span id="pull-status-text" class="muted"></span>
+            </div>
+            <div id="models-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+        </section>
+
+        <!-- ==================== TRAINING ==================== -->
+        <section id="tab-training" class="tab-content">
+            <div class="toolbar">
+                <h2>Training Sessions</h2>
+                <button id="btn-new-session" class="btn btn-primary">New Session</button>
+            </div>
+
+            <!-- New session form (hidden by default) -->
+            <div id="new-session-form" class="form-panel hidden">
+                <h3>Start New Training Session</h3>
+                <div class="form-tabs">
+                    <button class="form-tab active" data-form="from-kb">From Knowledge Base</button>
+                    <button class="form-tab" data-form="custom">Custom Task</button>
+                </div>
+
+                <!-- From KB -->
+                <div id="form-from-kb" class="form-section">
+                    <label>Select Task:</label>
+                    <select id="kb-task-select" class="input-wide">
+                        <option value="">Loading tasks...</option>
+                    </select>
+                    <label>Model:</label>
+                    <select id="session-model-kb" class="input-wide">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <div class="form-row">
+                        <div>
+                            <label>Max Iterations:</label>
+                            <input type="number" id="session-max-iter-kb" value="5" min="1" max="20">
+                        </div>
+                        <div>
+                            <label>Temperature:</label>
+                            <input type="number" id="session-temp-kb" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                    </div>
+                    <button id="btn-start-kb-session" class="btn btn-primary">Start Training</button>
+                </div>
+
+                <!-- Custom -->
+                <div id="form-custom" class="form-section hidden">
+                    <label>Title:</label>
+                    <input type="text" id="custom-title" class="input-wide" placeholder="Task title">
+                    <label>Instruction:</label>
+                    <textarea id="custom-instruction" rows="4" class="input-wide" placeholder="Describe the task for the model..."></textarea>
+                    <label>Expected Behavior:</label>
+                    <textarea id="custom-expected" rows="2" class="input-wide" placeholder="What a correct response looks like..."></textarea>
+                    <label>Evaluation Criteria (one per line):</label>
+                    <textarea id="custom-criteria" rows="3" class="input-wide" placeholder="Criterion 1&#10;Criterion 2&#10;..."></textarea>
+                    <label>Model:</label>
+                    <select id="session-model-custom" class="input-wide">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <div class="form-row">
+                        <div>
+                            <label>Max Iterations:</label>
+                            <input type="number" id="session-max-iter-custom" value="5" min="1" max="20">
+                        </div>
+                        <div>
+                            <label>Temperature:</label>
+                            <input type="number" id="session-temp-custom" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                    </div>
+                    <button id="btn-start-custom-session" class="btn btn-primary">Start Training</button>
+                </div>
+            </div>
+
+            <!-- Session list -->
+            <div id="sessions-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+
+            <!-- Session detail (hidden by default) -->
+            <div id="session-detail" class="detail-panel hidden">
+                <div class="detail-header">
+                    <h3 id="session-detail-title">Session</h3>
+                    <button id="btn-close-detail" class="btn btn-small">Close</button>
+                </div>
+                <div id="session-detail-body"></div>
+            </div>
+        </section>
+
+        <!-- ==================== KNOWLEDGE BASE ==================== -->
+        <section id="tab-knowledge" class="tab-content">
+            <div class="toolbar">
+                <h2>Knowledge Base</h2>
+                <div class="toolbar-actions">
+                    <button id="btn-add-task" class="btn btn-primary">Add Task</button>
+                    <button id="btn-export-kb" class="btn">Export Archive</button>
+                    <label class="btn btn-file">
+                        Import Archive
+                        <input type="file" id="import-kb-file" accept=".zip" hidden>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Add task form -->
+            <div id="add-task-form" class="form-panel hidden">
+                <h3>Add New Task</h3>
+                <label>Title:</label>
+                <input type="text" id="new-task-title" class="input-wide" placeholder="Task title">
+                <label>Instruction:</label>
+                <textarea id="new-task-instruction" rows="4" class="input-wide" placeholder="Task instruction..."></textarea>
+                <label>Expected Behavior:</label>
+                <textarea id="new-task-expected" rows="2" class="input-wide" placeholder="Expected behavior..."></textarea>
+                <label>Evaluation Criteria (one per line):</label>
+                <textarea id="new-task-criteria" rows="3" class="input-wide" placeholder="Criterion 1&#10;Criterion 2"></textarea>
+                <label>Difficulty:</label>
+                <select id="new-task-difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <label>Tags (comma-separated):</label>
+                <input type="text" id="new-task-tags" class="input-wide" placeholder="python, algorithms">
+                <div class="form-actions">
+                    <button id="btn-save-task" class="btn btn-primary">Save Task</button>
+                    <button id="btn-cancel-task" class="btn">Cancel</button>
+                </div>
+            </div>
+
+            <div class="kb-filters">
+                <select id="kb-filter-kind">
+                    <option value="">All Types</option>
+                    <option value="task">Tasks</option>
+                    <option value="pattern">Patterns</option>
+                    <option value="prompt">Prompts</option>
+                </select>
+            </div>
+            <div id="kb-list" class="list-container">
+                <p class="muted">Loading...</p>
+            </div>
+        </section>
+
+        <!-- ==================== CHAT ==================== -->
+        <section id="tab-chat" class="tab-content">
+            <div class="toolbar">
+                <h2>Quick Chat</h2>
+                <select id="chat-model" class="input-wide">
+                    <option value="">Select model...</option>
+                </select>
+            </div>
+            <div id="chat-messages" class="chat-container"></div>
+            <div class="chat-input-row">
+                <textarea id="chat-input" rows="2" placeholder="Type a message..." class="input-wide"></textarea>
+                <button id="btn-send-chat" class="btn btn-primary">Send</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

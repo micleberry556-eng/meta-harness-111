@@ -1,0 +1,26 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for layer caching
+COPY requirements-training.txt .
+RUN pip install --no-cache-dir -r requirements-training.txt
+
+# Copy application code
+COPY training_interface/ training_interface/
+COPY data/ data/
+
+# Create data directories
+RUN mkdir -p data/sessions data/knowledge_base data/exports
+
+EXPOSE 8000
+
+# Ollama runs on the host or as a separate container; connect via OLLAMA_HOST
+ENV OLLAMA_HOST=http://host.docker.internal:11434
+
+CMD ["python", "-m", "training_interface.app"]

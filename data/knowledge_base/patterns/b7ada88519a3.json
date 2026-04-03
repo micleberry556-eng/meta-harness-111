@@ -1,0 +1,15 @@
+{
+  "name": "explanation_quality",
+  "description": "Evaluates the quality of explanations and documentation",
+  "criteria_template": [
+    "Explanation is clear and concise",
+    "Uses correct technical terminology",
+    "Provides examples where helpful",
+    "Covers edge cases and limitations"
+  ],
+  "tags": [
+    "explanation",
+    "documentation"
+  ],
+  "id": "b7ada88519a3"
+}

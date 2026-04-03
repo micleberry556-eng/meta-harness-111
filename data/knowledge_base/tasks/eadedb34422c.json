@@ -1,0 +1,20 @@
+{
+  "title": "REST API Error Handler",
+  "instruction": "Write a Python decorator called handle_errors that wraps a Flask or FastAPI route handler. It should catch exceptions and return a JSON response with 'error' and 'status_code' fields. Map ValueError to 400, KeyError to 404, and all others to 500.",
+  "expected_behavior": "A decorator that catches specific exceptions and returns structured JSON error responses with appropriate HTTP status codes.",
+  "evaluation_criteria": [
+    "Implements a decorator named handle_errors",
+    "Catches ValueError and returns 400",
+    "Catches KeyError and returns 404",
+    "Catches generic Exception and returns 500",
+    "Returns JSON with 'error' and 'status_code' fields",
+    "Preserves the original function's behavior on success"
+  ],
+  "difficulty": "medium",
+  "tags": [
+    "python",
+    "web",
+    "error-handling"
+  ],
+  "id": "eadedb34422c"
+}

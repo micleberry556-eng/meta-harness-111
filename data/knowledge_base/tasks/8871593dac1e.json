@@ -1,0 +1,22 @@
+{
+  "title": "Concurrent Web Scraper",
+  "instruction": "Write a Python async function scrape_urls(urls: list[str]) -> list[dict] that concurrently fetches a list of URLs using aiohttp and returns a list of dicts with keys 'url', 'status', 'length' (content length), and 'error' (None on success, error message on failure). Limit concurrency to 10 simultaneous requests. Handle timeouts (5 second limit per request) and connection errors.",
+  "expected_behavior": "An async function using aiohttp with a semaphore for concurrency limiting, proper error handling, and timeout configuration.",
+  "evaluation_criteria": [
+    "Function is async and named scrape_urls",
+    "Uses aiohttp for HTTP requests",
+    "Limits concurrency to 10 with a semaphore",
+    "Sets 5-second timeout per request",
+    "Returns list of dicts with url, status, length, error",
+    "Handles connection errors gracefully",
+    "Handles timeout errors gracefully"
+  ],
+  "difficulty": "hard",
+  "tags": [
+    "python",
+    "async",
+    "networking",
+    "concurrency"
+  ],
+  "id": "8871593dac1e"
+}
